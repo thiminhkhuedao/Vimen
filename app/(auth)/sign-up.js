@@ -125,7 +125,7 @@ export default function SignUpScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: T.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24, paddingTop: insets.top + 40 }} keyboardShouldPersistTaps="handled">
-        <Text style={{ fontSize: 28, fontWeight: "900", color: T.brand, marginBottom: 6, letterSpacing: -0.5 }}>⚡ Tradie</Text>
+        <Text style={{ fontSize: 28, fontWeight: "900", color: T.brand, marginBottom: 6, letterSpacing: -0.5 }}>⚡ Vinem</Text>
         <Text style={{ fontSize: 22, fontWeight: "800", color: T.text, marginBottom: 6 }}>Create account</Text>
         <Text style={{ fontSize: 14, color: T.muted, marginBottom: 24 }}>Start for free — no card needed</Text>
 

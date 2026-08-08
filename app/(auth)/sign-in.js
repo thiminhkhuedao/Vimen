@@ -49,9 +49,9 @@ export default function SignInScreen() {
         contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24, paddingTop: insets.top + 40 }}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={{ fontSize: 28, fontWeight: "900", color: T.brand, marginBottom: 6, letterSpacing: -0.5 }}>⚡ Tradie</Text>
+        <Text style={{ fontSize: 28, fontWeight: "900", color: T.brand, marginBottom: 6, letterSpacing: -0.5 }}>⚡ Vinem</Text>
         <Text style={{ fontSize: 22, fontWeight: "800", color: T.text, marginBottom: 6 }}>Welcome back</Text>
-        <Text style={{ fontSize: 14, color: T.muted, marginBottom: 28 }}>Sign in to your Tradie account</Text>
+        <Text style={{ fontSize: 14, color: T.muted, marginBottom: 28 }}>Sign in to your Vinem account</Text>
 
         <Text style={{ fontSize: 13, fontWeight: "500", color: T.muted, marginBottom: 6 }}>Email</Text>
         <TextInput

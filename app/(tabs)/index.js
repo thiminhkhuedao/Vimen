@@ -81,7 +81,7 @@ export default function DashboardScreen() {
   const getClient = j => clients.find(c=>c.id===(j.client_id??j.client?.id)) ?? j.client;
 
   async function shareBookingPage() {
-    const url = `https://tradie.app/b/${profile?.booking_slug || "yourname"}`;
+    const url = `https://Vinem.app/b/${profile?.booking_slug || "yourname"}`;
     await Share.share({ message: t("booking.shareMessage", { url }), url });
   }
 
@@ -195,7 +195,7 @@ export default function DashboardScreen() {
           style={{ marginHorizontal:16, marginBottom:16, backgroundColor:"#0F0E0D", borderRadius:16, padding:20, flexDirection:"row", alignItems:"center", justifyContent:"space-between" }}>
           <View style={{ flex:1 }}>
             <Text style={{ fontWeight:"800", color:"#fff", fontSize:15, marginBottom:4 }}>{t("dashboard.bookingLive")}</Text>
-            <Text style={{ fontSize:12, color:"rgba(255,255,255,0.4)" }} numberOfLines={1}>tradie.app/b/{profile?.booking_slug || "yourname"}</Text>
+            <Text style={{ fontSize:12, color:"rgba(255,255,255,0.4)" }} numberOfLines={1}>Vinem.app/b/{profile?.booking_slug || "yourname"}</Text>
           </View>
           <TouchableOpacity onPress={shareBookingPage} style={{ backgroundColor:T.brand, borderRadius:10, paddingHorizontal:16, paddingVertical:10, marginLeft:12 }}>
             <Text style={{ color:"#fff", fontWeight:"700", fontSize:13 }}>{t("common.share")}</Text>

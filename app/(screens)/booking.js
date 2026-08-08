@@ -64,7 +64,7 @@ export default function BookingScreen() {
   const pending  = bookings.filter(b=>b.status==="pending");
   const accepted = bookings.filter(b=>b.status==="accepted");
   const declined = bookings.filter(b=>b.status==="declined");
-  const bookingUrl = `https://tradie.app/b/${profile?.booking_slug||t("booking.slugPlaceholder")}`;
+  const bookingUrl = `https://Vinem.app/b/${profile?.booking_slug||t("booking.slugPlaceholder")}`;
 
   async function respond(id, status) {
     const { data, error } = await updateBookingStatus(id, status);
@@ -321,7 +321,7 @@ export default function BookingScreen() {
               <Input value={form.hourly_rate??""} onChangeText={v=>setForm(p=>({...p,hourly_rate:v}))} keyboardType="decimal-pad"/>
             </Field>
             <View style={{ backgroundColor:T.surface2, borderRadius:T.r.md, padding:12, marginBottom:14 }}>
-              <Text style={{ fontSize:13, color:T.muted }}>{t("booking.pageSettings.yourPage")} <Text style={{ color:T.brand, fontWeight:"600" }}>tradie.app/b/{form.booking_slug||t("booking.slugPlaceholder")}</Text></Text>
+              <Text style={{ fontSize:13, color:T.muted }}>{t("booking.pageSettings.yourPage")} <Text style={{ color:T.brand, fontWeight:"600" }}>Vinem.app/b/{form.booking_slug||t("booking.slugPlaceholder")}</Text></Text>
             </View>
             <Btn onPress={()=>Alert.alert(t("booking.alerts.saved"))} disabled={saving}>{saving?t("booking.pageSettings.saving"):t("booking.pageSettings.save")}</Btn>
           </Card>

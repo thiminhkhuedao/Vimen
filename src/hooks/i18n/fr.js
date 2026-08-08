@@ -1,6 +1,5 @@
 // src/i18n/fr.js
 // Traductions françaises.
-// Structure alignée sur en.js — mêmes chemins de clés, mêmes sections.
 
 export default {
   // ── Common ──────────────────────────────────────────
@@ -46,7 +45,7 @@ export default {
   auth: {
     welcomeBack:       "Bon retour",
     createAccount:     "Créer un compte",
-    signInSub:         "Connectez-vous à votre compte Tradie",
+    signInSub:         "Connectez-vous à votre compte Vinem",
     signUpSub:         "Démarrez gratuitement — sans carte bancaire",
     email:             "Adresse e-mail",
     password:          "Mot de passe",
@@ -68,7 +67,7 @@ export default {
     heroSub:           "Artisans, beauté & bien-être ou professions libérales — devis, rendez-vous, factures et paiements, tout en un seul endroit.",
     feature1:          "Les clients réservent leurs {{bookingPlural}} eux-mêmes",
     feature2:          "Facturez et encaissez",
-    feature3:          "Tradie Pay — 2% fixe",
+    feature3:          "Vinem Pay — 2% fixe",
     feature4:          "Conçu pour {{vertical}}",
     feature5:          "Demandes d'avis automatiques",
   },
@@ -81,7 +80,7 @@ export default {
     clients:        "Clients",
     invoices:       "Factures",
     booking:        "Réservations",
-    payments:       "Tradie Pay",
+    payments:       "Vinem Pay",
     marketplace:    "Marketplace",
     reviews:        "Avis",
     referrals:      "Parrainage",
@@ -465,9 +464,9 @@ export default {
 
   // ── Payments ─────────────────────────────────────────
   payments: {
-    title: "Tradie Pay 💳",
+    title: "Vinem Pay 💳",
     overview: {
-      activeBanner: "✓ Tradie Pay actif",
+      activeBanner: "✓ Vinem Pay actif",
       connected: "Connecté",
       recentPayments: "Paiements récents",
       noPayments: "Aucun paiement pour le moment",
@@ -499,8 +498,8 @@ export default {
       feeRows: {
         stripeProcessing: "Traitement Stripe",
         stripeProcessingNote: "Taux standard UK",
-        tradiePay: "Tradie Pay",
-        tradiePayNote: "Commission plateforme",
+        VinemPay: "Vinem Pay",
+        VinemPayNote: "Commission plateforme",
         total: "Total",
         totalNote: "Sur une facture de 500 € = 17 €",
       },
@@ -515,9 +514,9 @@ export default {
     feeTitle:       "Détail des frais — exemple 550 €",
     invoiceAmount:  "Montant de la facture",
     stripeFee:      "Frais Stripe (1,4 %+0,25 €)",
-    tradieFee:      "Tradie Pay (2 %)",
+    VinemFee:      "Vinem Pay (2 %)",
     youReceive:     "Vous recevez",
-    connected:      "✓ Tradie Pay actif",
+    connected:      "✓ Vinem Pay actif",
     autoPayouts:    "🏦 Virements automatiques",
     autoPayoutsSub: "Vos gains sont virés automatiquement tous les 2 jours ouvrés sur votre compte bancaire.",
     noPayouts:      "Aucun virement pour l'instant",
@@ -548,7 +547,7 @@ export default {
       title: "Détail des frais — exemple facture de 550 €",
       invoiceAmount: "Montant de la facture",
       stripeFee: "Frais Stripe (1,4%+20p)",
-      tradiePayFee: "Tradie Pay (2%)",
+      VinemPayFee: "Vinem Pay (2%)",
       youReceive: "Vous recevez",
     },
     status: {
@@ -824,7 +823,7 @@ export default {
     referSomeoneBtn: "Parrainer quelqu'un",
     modal: {
       title: "Parrainer un artisan",
-      intro: "Vous connaissez un électricien, un plombier ou un maçon à qui Tradie pourrait plaire ? Quand il s'inscrit et termine son premier chantier, vous gagnez tous les deux 2 mois de Pro offerts.",
+      intro: "Vous connaissez un électricien, un plombier ou un maçon à qui Vinem pourrait plaire ? Quand il s'inscrit et termine son premier chantier, vous gagnez tous les deux 2 mois de Pro offerts.",
       theirNameLabel: "Son nom (facultatif)",
       theirEmailLabel: "Son email *",
       giftNote: "Il recevra une invitation personnelle avec votre lien de parrainage. Quand il active son compte, vous gagnez tous les deux 2 mois de Pro offerts.",
@@ -866,7 +865,7 @@ export default {
     reward:       "+{{months}} mois Pro",
     sending:      "Envoi…",
     sendCta:      "Envoyer l'invitation",
-    linkSub:      "Partagez ce lien avec n'importe quel artisan. Quand il termine sa première mission sur Tradie, vous recevez tous les deux {{months}} mois Pro offerts.",
+    linkSub:      "Partagez ce lien avec n'importe quel artisan. Quand il termine sa première mission sur Vinem, vous recevez tous les deux {{months}} mois Pro offerts.",
     status: {
       pending:   "En attente",
       signed_up: "Inscrit",
@@ -883,7 +882,7 @@ export default {
       linkCard: {
         title: "Your referral link",
         // Rendered as: "{bodyPrefix}<bold>{boldPhrase}</bold>{bodySuffix}"
-        bodyPrefix: "Partagez ceci avec tout artisan que vous connaissez. Quand il termine son premier chantier sur Tradie, vous obtenez tous les deux ",
+        bodyPrefix: "Partagez ceci avec tout artisan que vous connaissez. Quand il termine son premier chantier sur Vinem, vous obtenez tous les deux ",
         boldPhrase: "2 mois de Pro offerts",
         bodySuffix: ".",
         shareLinkBtn: "Partager le lien",
@@ -893,7 +892,7 @@ export default {
         title: "Comment ça marche",
         step1: { title: "Partagez", desc: "Envoyez votre lien à un artisan que vous connaissez." },
         step2: { title: "Il s'inscrit", desc: "Il crée un compte gratuit en utilisant votre lien." },
-        step3: { title: "Il termine un chantier", desc: "Après son premier chantier sur Tradie, le parrainage est validé." },
+        step3: { title: "Il termine un chantier", desc: "Après son premier chantier sur Vinem, le parrainage est validé." },
         step4: { title: "Vous obtenez tous les deux 2 mois de Pro offerts", desc: "Appliqué automatiquement aux deux comptes." },
       },
       yourReferralsCount: "Vos parrainages ({{count}})",
@@ -915,7 +914,7 @@ export default {
         failedToSend: "Échec de l'envoi du parrainage",
         sentTitle: "✓ Parrainage envoyé !",
         sentMessage: "Invitation envoyée à {{email}}",
-        shareMessage: "J'utilise Tradie pour gérer mon activité — hyper simple pour les devis, les factures et les paiements. Inscris-toi gratuitement : {{url}}",
+        shareMessage: "J'utilise Vinem pour gérer mon activité — hyper simple pour les devis, les factures et les paiements. Inscris-toi gratuitement : {{url}}",
       },
     },
   },
@@ -1073,7 +1072,7 @@ export default {
     },
     items: {
       quotes:         { label: "Devis",           desc: "Créez des devis, faites-les valider par le client" },
-      payments:       { label: "Tradie Pay",       desc: "Paiements, transactions, versements" },
+      payments:       { label: "Vinem Pay",       desc: "Paiements, transactions, versements" },
       marketplace:    { label: "Place de marché",  desc: "Demandes, fonds de commerce, recrutement" },
       reviews:        { label: "Avis",             desc: "Demandez et gérez les avis clients" },
       referrals:      { label: "Parrainage",       desc: "Parrainez un artisan, obtenez 2 mois offerts" },

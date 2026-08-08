@@ -1,5 +1,5 @@
 // app/(tabs)/settings.js
-// Settings tab — full profile management, notifications, plan
+
 import { useState, useEffect } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, Alert, Switch,
@@ -264,11 +264,7 @@ export default function SettingsScreen() {
   );
 }
 
-/* ── VerticalField ─────────────────────────────────────
-   Generic renderer for vertical-specific extra profile fields on mobile.
-   Mirrors the web version in pages/SettingsPage.jsx — same field
-   definitions from lib/professions.js drive both, so adding a new
-   vertical or field never requires touching this component. */
+/* ── VerticalField ───────────────────────────────────── */
 function VerticalField({ field, value, onChange, t }) {
   if (field.type === "boolean") {
     return (
@@ -315,4 +311,4 @@ function VerticalField({ field, value, onChange, t }) {
       <Input value={value ?? ""} placeholder={field.placeholder} onChangeText={onChange}/>
     </Field>
   );
-}s
+}

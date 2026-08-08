@@ -1,6 +1,5 @@
 // src/lib/notifications.js
-// Calls Supabase Edge Functions for email (Resend) and SMS (Twilio).
-// Same edge functions as the web app — reused perfectly.
+
 import { supabase } from "./supabase";
 
 const invoke = async (fn, body) => {

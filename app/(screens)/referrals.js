@@ -8,13 +8,6 @@ import { getReferrals, createReferral } from "../../src/lib/db";
 import { Card, Btn, Badge, EmptyState, Spinner, Sheet, Field, Input } from "../../src/components/UI";
 import { T, SS, fmtDate } from "../../src/styles/tokens";
 
-// NOTE: this screen reuses several keys from the shared "referrals" namespace
-// (title, referSomeoneBtn, linkCard.title, modal.title, modal.theirNameLabel,
-// modal.theirEmailLabel, table.referFirst, status.*) since the copy is
-// identical to the web ReferralsPage. Mobile-specific copy (shorter stat
-// labels, condensed "how it works" steps, sheet intro, alerts) lives under
-// the new "referrals.screen" sub-namespace — see the additions files.
-
 const STATUS_COLOR = { pending:"gray", signed_up:"blue", qualified:"amber", rewarded:"green" };
 
 export default function ReferralsScreen() {
@@ -29,7 +22,7 @@ export default function ReferralsScreen() {
   const [saving,    setSaving]    = useState(false);
 
   const myCode = `TRD-${(profile?.name||"USER").replace(/\s/g,"").slice(0,4).toUpperCase()}${(profile?.id||"0000").slice(0,4).toUpperCase()}`;
-  const referralUrl = `https://tradie.app/signup?ref=${myCode}`;
+  const referralUrl = `https://Vinem.app/signup?ref=${myCode}`;
 
   const load = useCallback(async (refresh=false) => {
     if (!profile?.id) return;

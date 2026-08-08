@@ -6,6 +6,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
 import { setClerkTokenGetter } from "../src/lib/supabase";
+import { useProfile } from "../src/hooks/useProfile";
+import { usePushNotifications } from "../src/hooks/usePushNotifications";
 
 // Clerk's recommended token cache for Expo — stores the short-lived
 // session token in SecureStore. This stays small (unlike the full
@@ -31,7 +33,7 @@ const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 if (!publishableKey) {
   console.warn(
-    "[Tradie] Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY — add it to your .env"
+    "[Vinem] Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY — add it to your .env"
   );
 }
 
@@ -47,12 +49,22 @@ function ClerkToSupabaseBridge() {
   return null;
 }
 
+function PushNotificationRegistrar() {
+  // Waits for the profile to resolve (useProfile already handles the
+  // signed-out / not-loaded states internally, returning profile:null),
+  // then registers this device for push once we have a real profile id.
+  const { profile } = useProfile();
+  usePushNotifications(profile?.id);
+  return null;
+}
+
 export default function RootLayout() {
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
           <ClerkToSupabaseBridge />
+          <PushNotificationRegistrar />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />

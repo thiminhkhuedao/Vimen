@@ -8,15 +8,6 @@ import { getReviews, getJobs, getClients } from "../../src/lib/db";
 import { Card, Btn, Badge, EmptyState, Spinner, Sheet, Field, Input } from "../../src/components/UI";
 import { T, SS, fmtDate } from "../../src/styles/tokens";
 
-// NOTE: this screen reuses several keys from the shared "reviews" namespace
-// (title, stats.reviewsCount, list.empty, list.verifiedBadge,
-// list.onGoogleBadge, requestModal.title, requestModal.completedJobLabel,
-// requestModal.sendSmsBtn, toast.selectCompletedJob, manualModal.clientNameLabel,
-// manualModal.ratingLabel, manualModal.addReviewBtn, fallback.client) since the
-// copy is identical to the web ReviewsPage. Mobile-specific copy (shorter
-// header buttons, condensed sheet intros, different alert wording) lives
-// under the new "reviews.screen" sub-namespace — see the additions files.
-
 function Stars({ rating, size=16 }) {
   return (
     <View style={SS.row}>

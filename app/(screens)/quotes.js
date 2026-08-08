@@ -7,22 +7,9 @@ import { getQuotes, getClients, createQuote, updateQuote, deleteQuote } from "..
 import { Card, Btn, Badge, EmptyState, Spinner, Sheet, Field, Input, SelectPicker } from "../../src/components/UI";
 import { T, SS, fmt, fmtDate, today } from "../../src/styles/tokens";
 
-// NOTE: `t` is used in this file as a local variable name (the calculated
-// line-item totals inside the add-quote sheet), so the translate function
-// is destructured as `tr` instead, same as the web QuotesPage.jsx.
-//
-// This screen also reuses several keys from the shared "quotes" namespace
-// (empty, status.*, modal.newTitle, fields.client/quoteTitle/validUntil/
-// notesForClient, lineItems.label/addLine/qtyPlaceholder/unitPricePlaceholder,
-// lineTypes.*, totals.subtotal/total, actions.createQuote, preview.convertToJob,
-// preview.signature.signBtn, deleteConfirm.title/message) since the copy is
-// identical to the web QuotesPage. Mobile-specific copy lives under the new
-// "quotes.screen" sub-namespace — see the additions files.
 
 const STATUS_COLOR = { draft:"gray", sent:"blue", viewed:"amber", accepted:"green", declined:"red", converted:"green" };
 
-// Canonical line-item type values — never translated, only the label shown
-// in the SelectPicker is. See LINE_TYPE_VALUES usage below.
 const LINE_TYPE_VALUES = ["labour", "material", "other"];
 
 function calcTotals(lines) {

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Tradie",
-    "slug": "tradie-app",
+    "name": "Vinem",
+    "slug": "Vinem-app",
     "version": "1.0.0",
     "sdkVersion": "54.0.0",
     "orientation": "portrait",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "app.tradie.mobile",
+      "bundleIdentifier": "app.Vinem.mobile",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -24,7 +24,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#E8500A"
       },
-      "package": "app.tradie.mobile"
+      "package": "app.Vinem.mobile"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -34,13 +34,14 @@
       "expo-router",
       "expo-secure-store",
       [
-        "expo-image-picker",
+        "expo-notifications",
         {
-          "photosPermission": "Tradie a besoin d'accéder à vos photos pour ajouter une image à vos prestations."
+          "icon": "./assets/icon.png",
+          "color": "#E8500A"
         }
       ]
     ],
-    "scheme": "tradie",
+    "scheme": "Vinem",
     "experiments": {
       "typedRoutes": true
     },

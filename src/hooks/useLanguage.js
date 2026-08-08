@@ -1,15 +1,10 @@
 // src/hooks/useLanguage.js (Expo only)
-// Wraps the shared i18n engine for React Native.
-// On mobile, language preference is stored in SecureStore
-// instead of localStorage (which doesn't exist in RN).
-// Usage:
-//   const { t, lang, setLanguage, languages } = useLanguage();
 
 import { useState, useEffect, useCallback } from "react";
 import * as SecureStore from "expo-secure-store";
 import { getLanguage, setLanguage as _setLanguage, LANGUAGES, t as _t } from "../hooks/i18n/index.js";
 
-const STORAGE_KEY = "tradie_language";
+const STORAGE_KEY = "Vinem_language";
 
 // Module-level listener set so all mounted components
 // re-render together when the language changes.

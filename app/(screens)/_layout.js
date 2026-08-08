@@ -11,7 +11,7 @@ export default function ScreensLayout() {
       headerBackTitle: "Back",
     }}>
       <Stack.Screen name="quotes"         options={{ title: "Quotes" }}/>
-      <Stack.Screen name="payments"       options={{ title: "Tradie Pay" }}/>
+      <Stack.Screen name="payments"       options={{ title: "Vinem Pay" }}/>
       <Stack.Screen name="reviews"        options={{ title: "Reviews" }}/>
       <Stack.Screen name="certifications" options={{ title: "Certifications" }}/>
       <Stack.Screen name="referrals"      options={{ title: "Referrals" }}/>

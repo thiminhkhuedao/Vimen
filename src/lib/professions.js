@@ -1,11 +1,4 @@
 // src/lib/professions.js
-//
-// THE UNIVERSAL PROFESSION SYSTEM
-// Tradie is a Doctolib/Fresha-style booking platform for ANY appointment-based
-// profession — not just trades. This file is the single source of truth that
-// drives: signup dropdown, booking page theming, terminology swaps
-// ("certifications" vs "bar number" vs "service menu"), and category badges
-// across Marketplace, Settings, and the public booking page.
 
 export const VERTICALS = {
   trades: {
@@ -123,28 +116,22 @@ export const VERTICALS = {
   },
 };
 
-// Flat list of every profession with its parent vertical attached —
-// used for the signup dropdown (one single select, grouped by vertical)
+
 export const ALL_PROFESSIONS = Object.values(VERTICALS).flatMap(v =>
   v.professions.map(p => ({ profession: p, vertical: v.id }))
 );
 
-// Look up which vertical a given profession string belongs to.
-// Falls back to "other" for anything not in the list (so custom/typed
-// professions never crash the UI).
+
 export function getVerticalForProfession(profession) {
   if (!profession) return VERTICALS.other;
   const match = ALL_PROFESSIONS.find(p => p.profession === profession);
   return match ? VERTICALS[match.vertical] : VERTICALS.other;
 }
 
-// Convenience: get just the terminology object for a profession
 export function getTerms(profession) {
   return getVerticalForProfession(profession).terms;
 }
 
-// Convenience: get the badge colour for a profession (used in Marketplace,
-// booking page header, sidebar trade label)
 export function getVerticalColor(profession) {
   return getVerticalForProfession(profession).color;
 }

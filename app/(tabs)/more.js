@@ -9,9 +9,6 @@ import { useProfile } from "../../src/hooks/useProfile";
 import { getProfessionLabel } from "../../src/lib/professions.js";
 import { T, SS } from "../../src/styles/tokens";
 
-// NOTE: routes/icons are structural (not translated). Labels/descriptions
-// are resolved through t() at render time, so this is now a function that
-// takes the translate function rather than a static module-level constant.
 function getSections(t) {
   return [
     {

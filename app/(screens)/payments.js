@@ -134,7 +134,7 @@ export default function PaymentsScreen() {
                   <>
                     <FeeRow label={t("payments.feeExample.invoiceAmount")}        value={fmt(gross)}/>
                     <FeeRow label={t("payments.feeExample.stripeFee")} value={`−${fmt(sf)}`} muted/>
-                    <FeeRow label={t("payments.feeExample.tradiePayFee")}       value={`−${fmt(pf)}`} muted/>
+                    <FeeRow label={t("payments.feeExample.VinemPayFee")}       value={`−${fmt(pf)}`} muted/>
                     <View style={[SS.spaceBetween, { paddingTop:10 }]}>
                       <Text style={{ fontSize:15, fontWeight:"800" }}>{t("payments.feeExample.youReceive")}</Text>
                       <Text style={{ fontSize:18, fontWeight:"900", color:T.green }}>{fmt(net)}</Text>
@@ -237,7 +237,7 @@ export default function PaymentsScreen() {
               <Text style={{ fontSize:15, fontWeight:"700", marginBottom:12 }}>{t("payments.connect.feeStructureTitle")}</Text>
               {[
                 [t("payments.connect.feeRows.stripeProcessing"), "1.4% + 20p", t("payments.connect.feeRows.stripeProcessingNote")],
-                [t("payments.connect.feeRows.tradiePay"), "2.0%", t("payments.connect.feeRows.tradiePayNote")],
+                [t("payments.connect.feeRows.VinemPay"), "2.0%", t("payments.connect.feeRows.VinemPayNote")],
                 [t("payments.connect.feeRows.total"), "~3.4%", t("payments.connect.feeRows.totalNote")],
               ].map(([label,fee,note])=>(
                 <View key={label} style={[SS.spaceBetween, { paddingVertical:10, borderBottomWidth:1, borderBottomColor:T.border }]}>

@@ -1,6 +1,4 @@
 // src/styles/tokens.js
-// All design constants. Import { T } from here everywhere.
-// React Native uses numbers for sizes (no "px").
 
 export const T = {
   // Brand

@@ -1,6 +1,5 @@
 // src/lib/db.js
-// Every database call used by the mobile app.
-// Same schema as the web app (001_schema.sql + 002_marketplace.sql).
+
 import { supabase } from "./supabase";
 
 const handle = async (query) => {
@@ -177,48 +176,9 @@ export const getTransactions = (profileId) =>
   handle(supabase.from("payment_transactions").select("*").eq("profile_id",profileId).order("paid_at",{ascending:false}));
 export const getPayouts = (profileId) =>
   handle(supabase.from("payouts").select("*").eq("profile_id",profileId).order("created_at",{ascending:false}));
+
 /* ══════════════════════════════════════════════════
-   SERVICE OPTIONS (booking catalogue)
-   A profile's bookable "menu": priced options with an optional image —
-   e.g. a bakery's different cake designs, a hairdresser's styles. Shown
-   on the public booking page so clients can pick one, or submit a fully
-   custom request instead. Vertical-agnostic: any profile can use this.
+   PUSH NOTIFICATIONS
 ══════════════════════════════════════════════════ */
-export const getServiceOptions = (profileId) =>
-  handle(
-    supabase.from("service_options")
-      .select("*")
-      .eq("profile_id", profileId)
-      .order("sort_order")
-  );
-
-export const createServiceOption = (profileId, data) =>
-  handle(supabase.from("service_options").insert({ profile_id: profileId, ...data }).select().single());
-
-export const updateServiceOption = (id, data) =>
-  handle(supabase.from("service_options").update(data).eq("id", id).select().single());
-
-export const deleteServiceOption = (id) =>
-  handle(supabase.from("service_options").delete().eq("id", id));
-
-// Uploads a catalogue option's image to the booking-images bucket, under
-// options/{profileId}/... — matches the storage RLS policy in
-// 004_service_options.sql. `fileUri` is the local URI returned by
-// expo-image-picker's launchImageLibraryAsync().
-export async function uploadOptionImage(profileId, fileUri) {
-  try {
-    const ext = fileUri.split(".").pop()?.split("?")[0]?.toLowerCase() || "jpg";
-    const path = `options/${profileId}/${Date.now()}.${ext}`;
-    const response = await fetch(fileUri);
-    const blob = await response.blob();
-    const { error: uploadError } = await supabase.storage
-      .from("booking-images")
-      .upload(path, blob, { upsert: true, contentType: blob.type || `image/${ext}` });
-    if (uploadError) { console.error("[db] uploadOptionImage", uploadError.message); return { data: null, error: uploadError }; }
-    const { data } = supabase.storage.from("booking-images").getPublicUrl(path);
-    return { data: data.publicUrl, error: null };
-  } catch (err) {
-    console.error("[db] uploadOptionImage", err.message);
-    return { data: null, error: err };
-  }
-}
+export const updatePushToken = (profileId, token) =>
+  handle(supabase.from("profiles").update({ push_token: token }).eq("id", profileId));

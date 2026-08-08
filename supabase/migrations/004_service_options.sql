@@ -1,15 +1,4 @@
 -- 004_service_options.sql
---
--- Adds a per-profile bookable catalogue ("service options") with price
--- and an optional image — e.g. a bakery's different cake designs, a
--- hairdresser's styles, a builder's common job packages. Shown on the
--- public booking page so clients can either pick one, or submit a fully
--- custom request with their own reference image, description, and budget.
---
--- This is intentionally vertical-agnostic: any profile can add options
--- regardless of trade. If a profile has zero options, the public booking
--- page behaves exactly as it does today (plain notes field, no catalogue
--- UI shown) — this is purely additive.
 
 -- ── Catalogue table ──────────────────────────────────────────────────
 create table if not exists service_options (

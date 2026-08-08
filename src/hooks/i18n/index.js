@@ -1,35 +1,4 @@
 // src/i18n/index.js
-// Lightweight i18n engine — no external dependency needed.
-// Works identically in both Vite (web) and Expo (mobile).
-//
-// Usage:
-//   import { t, setLanguage, getLanguage } from "../i18n";
-//
-//   t("common.save")              → "Save" / "Enregistrer"
-//   t("dashboard.greeting", { name: "Jake" }) → "Good morning, Jake 👋"
-//   t("nav.jobs")                 → "Jobs" / "Missions"
-//
-// For vertical-aware terms (e.g. "Appointment" vs "Job" vs "Consultation"),
-// use the professions.js getTerms() helper instead — it reads from the
-// same language setting automatically via this module.
-//
-// ── Persistence ────────────────────────────────────────
-// Web: localStorage, handled automatically below — nothing to configure.
-// Mobile (Expo): localStorage doesn't exist in React Native, so this
-// module never imports AsyncStorage/SecureStore directly (that would
-// break the web bundle, which doesn't have that package installed).
-// Instead, call configureStorage() ONCE at app startup with a small
-// {getItem, setItem} adapter around AsyncStorage or SecureStore:
-//
-//   // App.js (Expo)
-//   import AsyncStorage from "@react-native-async-storage/async-storage";
-//   import { configureStorage } from "./src/i18n";
-//   configureStorage(AsyncStorage); // AsyncStorage already matches the shape
-//
-// Until configureStorage() is called, the language choice still works
-// for the current session (setLanguage updates it in memory and every
-// useTranslation() consumer re-renders), it just won't survive an app
-// restart — it'll fall back to the OS locale again on next launch.
 
 import en from "./en.js";
 import fr from "./fr.js";
@@ -37,7 +6,7 @@ import fr from "./fr.js";
 const TRANSLATIONS = { en, fr };
 const SUPPORTED    = ["en", "fr"];
 const FALLBACK     = "en";
-const STORAGE_KEY  = "tradie_language";
+const STORAGE_KEY  = "Vinem_language";
 
 let _current = FALLBACK;
 
