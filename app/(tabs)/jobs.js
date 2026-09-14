@@ -6,7 +6,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfile } from "../../src/hooks/useProfile";
-import { getJobs, getClients, createJob, completeJob, deleteJob } from "../../src/lib/db";
+import { getJobs, getClients, createJob, updateJob, completeJob, deleteJob, createInvoice } from "../../src/lib/db";
+import { sendJobReminderSMS, sendInvoiceEmail } from "../../src/lib/notifications";
+import { supabase } from "../../src/lib/supabase";
 import { withTimeout } from "../../src/lib/withTimeout";
 import { useTranslation } from "../../src/hooks/i18n/index.js";
 import { Card, Btn, Badge, Avatar, EmptyState, Spinner, Sheet, Field, Input, SelectPicker } from "../../src/components/UI";
@@ -26,6 +28,7 @@ export default function JobsScreen() {
   const [loadError,setLoadError] = useState(null);
   const [tab,      setTab]      = useState("scheduled");
   const [addOpen,  setAddOpen]  = useState(false);
+  const [editJob,  setEditJob]  = useState(null);
   const [saving,   setSaving]   = useState(false);
   const [form,     setForm]     = useState({});
 
@@ -74,21 +77,40 @@ export default function JobsScreen() {
   const statusLabel = s => s==="scheduled" ? t("jobs.status.scheduled") : s==="completed" ? t("jobs.status.completed") : t("jobs.status.cancelled");
 
   function openAdd() {
+    setEditJob(null);
     setForm({ client_id: clients[0]?.id ?? "", title: "", date: today(), time: "09:00", duration: "2", amount: "", notes: "" });
+    setAddOpen(true);
+  }
+
+  function openEdit(job) {
+    setEditJob(job);
+    setForm({
+      client_id: job.client_id ?? job.client?.id ?? "",
+      title: job.title, date: job.date, time: job.time ?? "09:00",
+      duration: String(job.duration ?? 1), amount: String(job.amount ?? ""), notes: job.notes ?? "",
+    });
     setAddOpen(true);
   }
 
   async function handleAdd() {
     if (!form.title || !form.date || !form.client_id) { Alert.alert(t("jobs.fillRequiredFields")); return; }
     setSaving(true);
-    const { data, error } = await createJob(profile.id, {
+    const payload = {
       client_id: form.client_id, title: form.title, date: form.date,
       time: form.time, duration: parseFloat(form.duration) || 1,
-      amount: parseFloat(form.amount) || 0, notes: form.notes, status: "scheduled",
-    });
-    setSaving(false);
-    if (error) { Alert.alert(t("jobs.addFailed")); return; }
-    setJobs(prev => [data, ...prev]);
+      amount: parseFloat(form.amount) || 0, notes: form.notes,
+    };
+    if (editJob) {
+      const { data, error } = await updateJob(editJob.id, payload);
+      setSaving(false);
+      if (error) { Alert.alert(t("jobs.updateFailed") || "Could not update this job."); return; }
+      setJobs(prev => prev.map(j => j.id === editJob.id ? data : j));
+    } else {
+      const { data, error } = await createJob(profile.id, { ...payload, status: "scheduled" });
+      setSaving(false);
+      if (error) { Alert.alert(t("jobs.addFailed")); return; }
+      setJobs(prev => [data, ...prev]);
+    }
     setAddOpen(false);
   }
 
@@ -98,8 +120,51 @@ export default function JobsScreen() {
       { text: t("jobs.markDoneAction"), onPress: async () => {
         const { data } = await completeJob(id);
         if (data) setJobs(prev => prev.map(j => j.id === id ? data : j));
+
+        const job = jobs.find(j => j.id === id);
+        const client = clients.find(c => c.id === (job?.client_id ?? job?.client?.id));
+        if (client?.phone && profile?.phone) {
+          sendJobReminderSMS(job, client, profile);
+        }
+
+        // Job terminé → facture créée et envoyée automatiquement, sauf s'il
+        // en existe déjà une pour ce job (évite les doublons).
+        await autoCreateAndSendInvoice(data ?? job, client);
       }},
     ]);
+  }
+
+  async function autoCreateAndSendInvoice(job, client) {
+    if (!job) return;
+    try {
+      const { data: existing } = await supabase
+        .from("invoices").select("id").eq("job_id", job.id).maybeSingle();
+      if (existing) return; // déjà facturé, on ne duplique pas
+
+      const { data: invoice, error: invErr } = await createInvoice(profile.id, {
+        client_id: job.client_id ?? job.client?.id,
+        job_id: job.id,
+        amount: parseFloat(job.amount) || 0,
+        due_date: null,
+        status: "unpaid",
+      });
+      if (invErr) throw invErr;
+
+      Alert.alert(t("jobs.invoiceAutoCreatedToast") || "Invoice created automatically");
+
+      if (client?.email && invoice) {
+        const invoiceWithClient = { ...invoice, client };
+        const result = await sendInvoiceEmail(invoiceWithClient, profile);
+        if (result.success) {
+          await supabase.from("invoices")
+            .update({ reminder_count: 1, last_reminder_sent_at: new Date().toISOString() })
+            .eq("id", invoice.id);
+        }
+      }
+    } catch (err) {
+      console.error("[JobsScreen] auto invoice creation failed:", err);
+      Alert.alert(t("jobs.invoiceAutoCreateFailedToast") || "Job completed, but the invoice could not be created automatically — add it manually.");
+    }
   }
 
   async function handleDelete(id) {
@@ -174,6 +239,7 @@ export default function JobsScreen() {
                     {j.status === "scheduled" && (
                       <Btn size="sm" variant="success" onPress={() => handleComplete(j.id)} style={{ flex: 1 }}>✓ {t("jobs.markDoneAction")}</Btn>
                     )}
+                    <Btn size="sm" variant="ghost" onPress={() => openEdit(j)} style={{ flex: j.status === "scheduled" ? 0 : 1 }}>{t("common.edit")}</Btn>
                     <Btn size="sm" variant="danger" onPress={() => handleDelete(j.id)} style={{ flex: j.status === "scheduled" ? 0 : 1 }}>{t("common.delete")}</Btn>
                   </View>
                 </Card>
