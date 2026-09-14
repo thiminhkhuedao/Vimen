@@ -5,8 +5,11 @@ import {
   RefreshControl, Alert, Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuth } from "@clerk/clerk-expo";
 import { useProfile } from "../../src/hooks/useProfile";
-import { getInvoices, getClients, getJobs, createInvoice, markInvoicePaid } from "../../src/lib/db";
+import { getInvoices, getClients, getJobs, createInvoice, markInvoicePaid, deleteInvoice } from "../../src/lib/db";
+import { createPaymentLink } from "../../src/lib/stripe";
+import * as Clipboard from "expo-clipboard";
 import { sendInvoiceEmail, sendInvoicePaidSMS } from "../../src/lib/notifications";
 import { withTimeout } from "../../src/lib/withTimeout";
 import { useTranslation } from "../../src/hooks/i18n/index.js";
@@ -20,6 +23,7 @@ export default function InvoicesScreen() {
   const insets        = useSafeAreaInsets();
   const { t }         = useTranslation();
   const { profile }   = useProfile();
+  const { getToken }  = useAuth();
   const [invoices, setInvoices] = useState([]);
   const [clients,  setClients]  = useState([]);
   const [jobs,     setJobs]     = useState([]);
@@ -29,6 +33,7 @@ export default function InvoicesScreen() {
   const [filter,   setFilter]   = useState("all");
   const [addOpen,  setAddOpen]  = useState(false);
   const [detailInv,setDetailInv]= useState(null);
+  const [busy, setBusy] = useState(false);
   const [saving,   setSaving]   = useState(false);
   const [form,     setForm]     = useState({});
 
@@ -115,6 +120,57 @@ export default function InvoicesScreen() {
     const result = await sendInvoiceEmail(inv, profile);
     if (result.success) Alert.alert(t("invoices.emailedTitle"), t("invoices.emailedSentTo",{email:inv.client.email}));
     else Alert.alert(t("invoices.emailFailedTitle"), result.error);
+  }
+
+  async function handleStripeLink(inv) {
+    setBusy(true);
+    try {
+      const token = await getToken();
+      const result = await createPaymentLink(inv.id, token);
+      if (!result) throw new Error("No result from Stripe");
+      setInvoices(prev => prev.map(i =>
+        i.id === inv.id ? { ...i, stripe_payment_link_url: result.url, stripe_payment_link_id: result.id } : i
+      ));
+      setDetailInv(prev => prev && prev.id === inv.id ? { ...prev, stripe_payment_link_url: result.url } : prev);
+      Alert.alert(t("invoices.paymentLinkCreated") || "Payment link created");
+    } catch (err) {
+      console.error("[InvoicesScreen] Stripe payment link error:", err);
+      Alert.alert(t("invoices.paymentLinkFailed") || "Failed to create payment link. Check your Stripe connection.");
+    }
+    setBusy(false);
+  }
+
+  async function handleCopyBankDetails(inv) {
+    const lines = [
+      profile.bank_name      && `${t("invoices.bankLabel")} ${profile.bank_name}`,
+      profile.sort_code      && `${t("invoices.sortCodeLabel")} ${profile.sort_code}`,
+      profile.account_number && `${t("invoices.accountLabel")} ${profile.account_number}`,
+      `${t("invoices.referenceLabel")} ${inv.invoice_number}`,
+    ].filter(Boolean).join("\n");
+    await Clipboard.setStringAsync(lines);
+    Alert.alert(t("invoices.bankDetailsCopied") || "Bank details copied");
+  }
+
+  function handleDelete(inv) {
+    Alert.alert(
+      t("invoices.deleteConfirmTitle") || "Delete this invoice?",
+      t("invoices.deleteConfirmMessage") || "This can't be undone.",
+      [
+        { text: t("common.cancel") || "Cancel", style: "cancel" },
+        {
+          text: t("invoices.delete") || "Delete",
+          style: "destructive",
+          onPress: async () => {
+            setBusy(true);
+            const { error } = await deleteInvoice(inv.id);
+            setBusy(false);
+            if (error) { Alert.alert(t("invoices.deleteFailed") || "Could not delete this invoice."); return; }
+            setInvoices(prev => prev.filter(i => i.id !== inv.id));
+            setDetailInv(null);
+          },
+        },
+      ]
+    );
   }
 
   if (loading) return <Spinner />;
@@ -213,9 +269,19 @@ export default function InvoicesScreen() {
                   <Btn size="sm" onPress={() => handleSendEmail(detailInv)} style={{ flex: 1 }}>📧 {t("invoices.emailShort")}</Btn>
                 </>
               )}
-              {detailInv.stripe_payment_link_url && (
+              {detailInv.stripe_payment_link_url ? (
                 <Btn size="sm" variant="ghost" onPress={() => Linking.openURL(detailInv.stripe_payment_link_url)} style={{ flex: 1 }}>💳 {t("invoices.paymentLinkShort")}</Btn>
+              ) : detailInv.status === "unpaid" && (
+                <Btn size="sm" variant="ghost" onPress={() => handleStripeLink(detailInv)} disabled={busy} style={{ flex: 1 }}>
+                  💳 {busy ? (t("invoices.creating") || "Creating...") : (t("invoices.createPaymentLink") || "Payment link")}
+                </Btn>
               )}
+              <Btn size="sm" variant="ghost" onPress={() => handleCopyBankDetails(detailInv)} style={{ flex: 1 }}>
+                🏦 {t("invoices.copyBankDetails") || "Copy bank details"}
+              </Btn>
+              <Btn size="sm" variant="danger" onPress={() => handleDelete(detailInv)} disabled={busy} style={{ flex: 1 }}>
+                🗑 {t("invoices.delete") || "Delete"}
+              </Btn>
             </View>
           </>
         )}
