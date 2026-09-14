@@ -8,6 +8,8 @@ import { useRouter } from "expo-router";
 import { useSignUp } from "@clerk/clerk-expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { T } from "../../src/styles/tokens";
+import { checkRateLimit } from "../../src/lib/security";
+import Turnstile from "../../src/components/Turnstile";
 
 export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
@@ -22,10 +24,16 @@ export default function SignUpScreen() {
   const [code, setCode]       = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   async function submit() {
     if (!isLoaded) return;
     setError("");
+    if (!agreedToTerms) { setError("Please accept the Privacy Policy and Terms of Service to continue."); return; }
+    if (!captchaToken) { setError("Please complete the verification challenge."); return; }
+    const rateLimitMsg = await checkRateLimit("signup", { identifier: email.trim(), turnstileToken: captchaToken });
+    if (rateLimitMsg) { setError(rateLimitMsg); return; }
     setLoading(true);
 
     try {
@@ -148,12 +156,43 @@ export default function SignUpScreen() {
           </View>
         )}
 
+        <View style={{ marginTop: 14 }}>
+          <TouchableOpacity
+            onPress={() => setAgreedToTerms(v => !v)}
+            style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}
+            activeOpacity={0.7}
+          >
+            <View style={{
+              width: 20, height: 20, borderRadius: 5, marginTop: 1,
+              borderWidth: 1.5, borderColor: agreedToTerms ? T.brand : T.border,
+              backgroundColor: agreedToTerms ? T.brand : "transparent",
+              alignItems: "center", justifyContent: "center",
+            }}>
+              {agreedToTerms && <Text style={{ color: "#fff", fontSize: 13, fontWeight: "700" }}>✓</Text>}
+            </View>
+            <Text style={{ flex: 1, fontSize: 13, color: T.muted, lineHeight: 19 }}>
+              I agree to the{" "}
+              <Text style={{ color: T.brand, fontWeight: "600" }} onPress={() => router.push("/(screens)/privacy-policy")}>
+                Privacy Policy
+              </Text>
+              {" "}and{" "}
+              <Text style={{ color: T.brand, fontWeight: "600" }} onPress={() => router.push("/(screens)/terms-of-service")}>
+                Terms of Service
+              </Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ marginTop: 14 }}>
+          <Turnstile onVerify={setCaptchaToken} onExpire={() => setCaptchaToken(null)} />
+        </View>
+
         <TouchableOpacity
           onPress={submit}
-          disabled={loading || !email || !pass || !name}
+          disabled={loading || !email || !pass || !name || !captchaToken || !agreedToTerms}
           style={{
             marginTop: 20, backgroundColor: T.brand, borderRadius: 10, padding: 16,
-            alignItems: "center", opacity: loading || !email || !pass || !name ? 0.6 : 1,
+            alignItems: "center", opacity: loading || !email || !pass || !name || !captchaToken || !agreedToTerms ? 0.6 : 1,
           }}
         >
           <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>
