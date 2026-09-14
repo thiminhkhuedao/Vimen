@@ -4,7 +4,8 @@ import { View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl, Linkin
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "../../src/hooks/i18n/index.js";
 import { useProfile } from "../../src/hooks/useProfile";
-import { getReviews, getJobs, getClients } from "../../src/lib/db";
+import { getReviews, getJobs, getClients, createReview } from "../../src/lib/db";
+import { sendReviewRequestSMS } from "../../src/lib/notifications";
 import { Card, Btn, Badge, EmptyState, Spinner, Sheet, Field, Input } from "../../src/components/UI";
 import { T, SS, fmtDate } from "../../src/styles/tokens";
 
@@ -31,6 +32,8 @@ export default function ReviewsScreen() {
   const [addSheet, setAddSheet] = useState(false);
   const [selJob,   setSelJob]   = useState("");
   const [form,     setForm]     = useState({ client_name:"", rating:5, title:"", body:"" });
+  const [sending, setSending] = useState(false);
+  const [savingManual, setSavingManual] = useState(false);
 
   const load = useCallback(async (refresh=false) => {
     if (!profile?.id) return;
@@ -49,27 +52,43 @@ export default function ReviewsScreen() {
   const avgRating = reviews.length>0 ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : "—";
   const verified  = reviews.filter(r=>r.verified).length;
 
-  function sendRequest() {
+  async function sendRequest() {
     const job = jobs.find(j=>j.id===selJob);
     if (!job) { Alert.alert(t("reviews.toast.selectCompletedJob")); return; }
     const cl = clients.find(c=>c.id===(job.client_id??job.client?.id));
-    Alert.alert(t("reviews.screen.alerts.requestSentTitle"), t("reviews.screen.alerts.requestSentMessage", { name: cl?.name ?? t("reviews.fallback.client") }));
-    setReqSheet(false);
+    if (!cl?.phone) { Alert.alert(t("reviews.noClientPhone") || "This client has no phone number."); return; }
+
+    setSending(true);
+    const result = await sendReviewRequestSMS(cl, job, profile);
+    setSending(false);
+
+    if (result.success) {
+      Alert.alert(t("reviews.screen.alerts.requestSentTitle"), t("reviews.screen.alerts.requestSentMessage", { name: cl?.name ?? t("reviews.fallback.client") }));
+      setReqSheet(false);
+    } else {
+      Alert.alert(t("reviews.requestFailedTitle") || "Could not send request", result.error);
+    }
   }
 
-  function addManual() {
+  async function addManual() {
     if (!form.client_name) { Alert.alert(t("reviews.screen.alerts.clientNameRequired")); return; }
-    setReviews(prev=>[{
-      id: Math.random().toString(36).slice(2),
+    setSavingManual(true);
+    const { data, error } = await createReview({
       profile_id: profile?.id,
+      job_id: null,
+      client_id: null,
       client_name: form.client_name,
       rating: form.rating,
       title: form.title,
       body: form.body,
       verified: true,
-      google_review_clicked: false,
-      created_at: new Date().toISOString(),
-    }, ...prev]);
+    });
+    setSavingManual(false);
+    if (error) {
+      Alert.alert(t("reviews.addFailedTitle") || "Could not add this review. Try again.");
+      return;
+    }
+    setReviews(prev=>[data, ...prev]);
     setAddSheet(false);
     setForm({ client_name:"", rating:5, title:"", body:"" });
   }
@@ -193,7 +212,9 @@ export default function ReviewsScreen() {
             </ScrollView>
           </View>
         </Field>
-        <Btn onPress={sendRequest} style={{ marginTop:8 }}>{t("reviews.requestModal.sendSmsBtn")}</Btn>
+        <Btn onPress={sendRequest} disabled={sending} style={{ marginTop:8 }}>
+          {sending ? (t("reviews.sending") || "Sending...") : t("reviews.requestModal.sendSmsBtn")}
+        </Btn>
       </Sheet>
 
       {/* Add manual review sheet */}
@@ -210,7 +231,9 @@ export default function ReviewsScreen() {
         </Field>
         <Field label={t("reviews.screen.addSheet.titleLabel")}><Input value={form.title} onChangeText={v=>setForm(p=>({...p,title:v}))} placeholder={t("reviews.screen.addSheet.titlePlaceholder")}/></Field>
         <Field label={t("reviews.screen.addSheet.reviewLabel")}><Input value={form.body} onChangeText={v=>setForm(p=>({...p,body:v}))} multiline numberOfLines={3} placeholder={t("reviews.screen.addSheet.reviewPlaceholder")}/></Field>
-        <Btn onPress={addManual} style={{ marginTop:8 }}>{t("reviews.manualModal.addReviewBtn")}</Btn>
+        <Btn onPress={addManual} disabled={savingManual} style={{ marginTop:8 }}>
+          {savingManual ? (t("reviews.saving") || "Saving...") : t("reviews.manualModal.addReviewBtn")}
+        </Btn>
       </Sheet>
     </View>
   );
