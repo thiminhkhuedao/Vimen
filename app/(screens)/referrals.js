@@ -1,10 +1,11 @@
 // app/(screens)/referrals.js
 import { useState, useEffect, useCallback } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Alert, Share, RefreshControl } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert, Share, RefreshControl, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "../../src/hooks/i18n/index.js";
 import { useProfile } from "../../src/hooks/useProfile";
 import { getReferrals, createReferral } from "../../src/lib/db";
+import { supabase } from "../../src/lib/supabase";
 import { Card, Btn, Badge, EmptyState, Spinner, Sheet, Field, Input } from "../../src/components/UI";
 import { T, SS, fmtDate } from "../../src/styles/tokens";
 
@@ -22,7 +23,7 @@ export default function ReferralsScreen() {
   const [saving,    setSaving]    = useState(false);
 
   const myCode = `TRD-${(profile?.name||"USER").replace(/\s/g,"").slice(0,4).toUpperCase()}${(profile?.id||"0000").slice(0,4).toUpperCase()}`;
-  const referralUrl = `https://Vinem.app/signup?ref=${myCode}`;
+  const referralUrl = `https://vimen.app/signup?ref=${myCode}`;
 
   const load = useCallback(async (refresh=false) => {
     if (!profile?.id) return;
@@ -47,12 +48,47 @@ export default function ReferralsScreen() {
     if (!form.email) { Alert.alert(t("referrals.screen.alerts.emailRequired")); return; }
     setSaving(true);
     const { data, error } = await createReferral(profile.id, form.email, form.name);
-    setSaving(false);
-    if (error) { Alert.alert(t("referrals.screen.alerts.failedToSend")); return; }
+    if (error) {
+      setSaving(false);
+      Alert.alert(t("referrals.screen.alerts.failedToSend"));
+      return;
+    }
     setReferrals(prev=>[data,...prev]);
+
+    // Envoi réel de l'invitation par email — avant, cette fonction
+    // insérait juste la ligne en base et affichait "envoyé" sans jamais
+    // rien envoyer au filleul.
+    let emailSent = false;
+    try {
+      const { error: fnError } = await supabase.functions.invoke("send-referral-email", {
+        body: {
+          to: form.email,
+          referredName: form.name,
+          referrerName: profile.name,
+          referralCode: data.referral_code,
+          referralUrl,
+        },
+      });
+      if (fnError) throw fnError;
+      emailSent = true;
+    } catch (emailErr) {
+      console.warn("[referrals] send-referral-email failed:", emailErr);
+    }
+
+    setSaving(false);
     setSheet(false);
     setForm({ name:"", email:"" });
-    Alert.alert(t("referrals.screen.alerts.sentTitle"), t("referrals.screen.alerts.sentMessage", { email: form.email }));
+
+    if (emailSent) {
+      Alert.alert(t("referrals.screen.alerts.sentTitle"), t("referrals.screen.alerts.sentMessage", { email: form.email }));
+    } else {
+      // Repli : ouvre l'app mail du téléphone avec le message pré-rempli,
+      // même logique que le fallback mailto côté web.
+      const subject = `Invitation from ${profile?.name || "a friend"}`;
+      const body = `Hi ${form.name || ""},\n\nUse my referral link to sign up: ${referralUrl}`;
+      Linking.openURL(`mailto:${form.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+      Alert.alert(t("referrals.savedOpeningMail") || "Saved! Opening your mail app to complete delivery...");
+    }
   }
 
   if (loading) return <Spinner/>;
