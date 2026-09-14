@@ -5,8 +5,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { useProfile } from "../../src/hooks/useProfile";
 import {
-  getBookingRequests, updateBookingStatus,
+  getBookingRequests, updateBookingStatus, updateProfile,
   getServiceOptions, createServiceOption, updateServiceOption, deleteServiceOption, uploadOptionImage,
+  getAvailability, saveAvailability,
 } from "../../src/lib/db";
 import { Card, Btn, Badge, Avatar, EmptyState, Spinner, Sheet, ConfirmSheet, Field, Input, Toggle } from "../../src/components/UI";
 import { T, SS, fmtDate, fmt } from "../../src/styles/tokens";
@@ -28,6 +29,8 @@ export default function BookingScreen() {
   const [form,      setForm]      = useState({});
   const [saving,    setSaving]    = useState(false);
   const [opening,   setOpening]   = useState(false);
+  const [avail,        setAvail]        = useState(null);
+  const [savingAvail,  setSavingAvail]  = useState(false);
 
   // ── Bookable options (catalogue) ──────────────────────
   const [options,        setOptions]        = useState([]);
@@ -60,11 +63,24 @@ export default function BookingScreen() {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (profile) setForm({ bio:profile.bio||"", hourly_rate:String(profile.hourly_rate||""), booking_slug:profile.booking_slug||"" }); }, [profile]);
   useEffect(() => { if (tab==="options" && profile?.id) loadOptions(); }, [tab, profile?.id, loadOptions]);
+  useEffect(() => {
+    if (tab !== "settings" || !profile?.id) return;
+    getAvailability(profile.id).then(({ data }) => {
+      const map = {};
+      for (let i = 0; i < 7; i++) {
+        const row = (data ?? []).find(a => a.day_of_week === i);
+        map[i] = row
+          ? { enabled: true, start_time: row.start_time.slice(0,5), end_time: row.end_time.slice(0,5) }
+          : { enabled: false, start_time: "09:00", end_time: "18:00" };
+      }
+      setAvail(map);
+    });
+  }, [tab, profile?.id]);
 
   const pending  = bookings.filter(b=>b.status==="pending");
   const accepted = bookings.filter(b=>b.status==="accepted");
   const declined = bookings.filter(b=>b.status==="declined");
-  const bookingUrl = `https://Vinem.app/b/${profile?.booking_slug||t("booking.slugPlaceholder")}`;
+  const bookingUrl = `https://vimen.app/b/${profile?.booking_slug||t("booking.slugPlaceholder")}`;
 
   async function respond(id, status) {
     const { data, error } = await updateBookingStatus(id, status);
@@ -166,6 +182,38 @@ export default function BookingScreen() {
     setOptions(prev => prev.filter(o => o.id!==deleteTarget.id));
     setDeleteTarget(null);
     setOptionSheet(null);
+  }
+
+  // Sauvegarde RÉELLE des paramètres de page — avant, ce bouton affichait
+  // juste une alerte "Enregistré" sans jamais appeler updateProfile, la
+  // bio/le tarif/le slug modifiés dans le formulaire n'étaient jamais
+  // persistés côté serveur.
+  async function handleSaveSettings() {
+    setSaving(true);
+    const { error } = await updateProfile(profile.clerk_id, {
+      bio: form.bio,
+      hourly_rate: form.hourly_rate ? parseFloat(form.hourly_rate) : 0,
+      booking_slug: form.booking_slug,
+    });
+    setSaving(false);
+    if (error) { Alert.alert(t("booking.alerts.saveFailed") || "Could not save. Try again."); return; }
+    setProfile(prev => ({ ...prev, ...form, hourly_rate: form.hourly_rate ? parseFloat(form.hourly_rate) : 0 }));
+    Alert.alert(t("booking.alerts.saved"));
+  }
+
+  function toggleDay(day) {
+    setAvail(prev => ({ ...prev, [day]: { ...prev[day], enabled: !prev[day].enabled } }));
+  }
+  function setDayTime(day, field, value) {
+    setAvail(prev => ({ ...prev, [day]: { ...prev[day], [field]: value } }));
+  }
+  async function handleSaveAvailability() {
+    if (!avail || !profile?.id) return;
+    setSavingAvail(true);
+    const { error } = await saveAvailability(profile.id, avail);
+    setSavingAvail(false);
+    if (error) { Alert.alert(t("booking.availabilitySaveFailed") || "Could not save availability, please try again"); return; }
+    Alert.alert(t("booking.availabilitySaved") || "Availability saved");
   }
 
   if (loading) return <Spinner/>;
@@ -321,9 +369,46 @@ export default function BookingScreen() {
               <Input value={form.hourly_rate??""} onChangeText={v=>setForm(p=>({...p,hourly_rate:v}))} keyboardType="decimal-pad"/>
             </Field>
             <View style={{ backgroundColor:T.surface2, borderRadius:T.r.md, padding:12, marginBottom:14 }}>
-              <Text style={{ fontSize:13, color:T.muted }}>{t("booking.pageSettings.yourPage")} <Text style={{ color:T.brand, fontWeight:"600" }}>Vinem.app/b/{form.booking_slug||t("booking.slugPlaceholder")}</Text></Text>
+              <Text style={{ fontSize:13, color:T.muted }}>{t("booking.pageSettings.yourPage")} <Text style={{ color:T.brand, fontWeight:"600" }}>vimen.app/b/{form.booking_slug||t("booking.slugPlaceholder")}</Text></Text>
             </View>
-            <Btn onPress={()=>Alert.alert(t("booking.alerts.saved"))} disabled={saving}>{saving?t("booking.pageSettings.saving"):t("booking.pageSettings.save")}</Btn>
+            <Btn onPress={handleSaveSettings} disabled={saving}>{saving?t("booking.pageSettings.saving"):t("booking.pageSettings.save")}</Btn>
+          </Card>
+        )}
+
+        {tab==="settings" && (
+          <Card>
+            <Text style={{ fontSize:15, fontWeight:"700", marginBottom:4 }}>{t("booking.availabilityTitle") || "Availability"}</Text>
+            <Text style={{ fontSize:13, color:T.muted, marginBottom:14 }}>{t("booking.availabilitySubtitle") || "Set the days and hours clients can book you."}</Text>
+            {!avail ? <Spinner/> : (
+              <View style={{ gap:8, marginBottom:16 }}>
+                {[
+                  t("booking.days.sun") || "Sunday", t("booking.days.mon") || "Monday", t("booking.days.tue") || "Tuesday",
+                  t("booking.days.wed") || "Wednesday", t("booking.days.thu") || "Thursday", t("booking.days.fri") || "Friday",
+                  t("booking.days.sat") || "Saturday",
+                ].map((dayName, i) => (
+                  <View key={i} style={{
+                    flexDirection:"row", alignItems:"center", gap:10, padding:10, borderRadius:T.r.md,
+                    backgroundColor: avail[i]?.enabled ? T.brandLight : T.surface2,
+                    borderWidth:1, borderColor: avail[i]?.enabled ? T.brand : T.border,
+                  }}>
+                    <Toggle value={avail[i]?.enabled ?? false} onValueChange={() => toggleDay(i)} />
+                    <Text style={{ width:90, fontSize:13, fontWeight:"600", color: avail[i]?.enabled ? T.brand : T.muted }}>{dayName}</Text>
+                    {avail[i]?.enabled ? (
+                      <View style={{ flexDirection:"row", alignItems:"center", gap:6, flex:1 }}>
+                        <Input value={avail[i].start_time} onChangeText={v=>setDayTime(i,"start_time",v)} placeholder="09:00" style={{ flex:1 }} />
+                        <Text style={{ fontSize:12, color:T.muted }}>{t("booking.to") || "to"}</Text>
+                        <Input value={avail[i].end_time} onChangeText={v=>setDayTime(i,"end_time",v)} placeholder="18:00" style={{ flex:1 }} />
+                      </View>
+                    ) : (
+                      <Text style={{ fontSize:12, color:T.muted }}>{t("booking.unavailable") || "Unavailable"}</Text>
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+            <Btn onPress={handleSaveAvailability} disabled={savingAvail || !avail}>
+              {savingAvail ? (t("booking.pageSettings.saving") || "Saving...") : (t("booking.saveAvailability") || "Save availability")}
+            </Btn>
           </Card>
         )}
       </ScrollView>
