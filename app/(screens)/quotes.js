@@ -3,7 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl } from "react-native";
 import { useTranslation } from "../../src/hooks/i18n/index.js";
 import { useProfile } from "../../src/hooks/useProfile";
-import { getQuotes, getClients, createQuote, updateQuote, deleteQuote } from "../../src/lib/db";
+import { getQuotes, getClients, createQuote, updateQuote, deleteQuote, createJob } from "../../src/lib/db";
+import { sendQuoteEmail } from "../../src/lib/notifications";
 import { Card, Btn, Badge, EmptyState, Spinner, Sheet, Field, Input, SelectPicker } from "../../src/components/UI";
 import { T, SS, fmt, fmtDate, today } from "../../src/styles/tokens";
 
@@ -12,12 +13,13 @@ const STATUS_COLOR = { draft:"gray", sent:"blue", viewed:"amber", accepted:"gree
 
 const LINE_TYPE_VALUES = ["labour", "material", "other"];
 
-function calcTotals(lines) {
+function calcTotals(lines, vatRate = 0) {
   const subtotal = lines.reduce((s,l) => s + (parseFloat(l.quantity)||0) * (parseFloat(l.unit_price)||0), 0);
+  const vat_amount = Math.round(subtotal * (vatRate/100) * 100) / 100;
+  const total    = subtotal + vat_amount;
   const matCost  = lines.filter(l=>l.type==="material").reduce((s,l) => s+(parseFloat(l.quantity)||0)*(parseFloat(l.unit_price)||0), 0);
-  const total    = Math.round(subtotal * 100) / 100;
   const margin_pct = total > 0 ? Math.round(((total - matCost) / total) * 100) : 0;
-  return { subtotal: total, total, vat_amount: 0, vat_rate: 0, margin_pct };
+  return { subtotal: Math.round(subtotal*100)/100, vat_amount, total: Math.round(total*100)/100, margin_pct };
 }
 
 const EMPTY_LINE = () => ({ id: Math.random().toString(36).slice(2), description: "", type: "labour", quantity: "1", unit_price: "" });
@@ -54,7 +56,7 @@ export default function QuotesScreen() {
   const current  = tab==="active" ? active : archived;
 
   function openAdd() {
-    setForm({ client_id: clients[0]?.id??"", title:"", notes:"", valid_until:"" });
+    setForm({ client_id: clients[0]?.id??"", title:"", notes:"", valid_until:"", vat_rate:"0" });
     setLines([EMPTY_LINE()]);
     setSheet("add");
   }
@@ -65,7 +67,8 @@ export default function QuotesScreen() {
 
   async function handleSave() {
     if (!form.title || !form.client_id) { Alert.alert(tr("quotes.screen.alerts.clientTitleRequired")); return; }
-    const totals = calcTotals(lines);
+    const vatRateNum = parseFloat(form.vat_rate) || 0;
+    const totals = calcTotals(lines, vatRateNum);
     const line_items = lines.map(l=>({ description:l.description, type:l.type, quantity:parseFloat(l.quantity)||0, unit_price:parseFloat(l.unit_price)||0, total:Math.round((parseFloat(l.quantity)||0)*(parseFloat(l.unit_price)||0)*100)/100 }));
     setSaving(true);
     const { data, error } = await createQuote(profile.id, { ...form, ...totals, line_items, status:"draft" });
@@ -93,13 +96,48 @@ export default function QuotesScreen() {
     ]);
   }
 
+  async function handleSendEmail(quote) {
+    const client = getClient(quote.client_id ?? quote.client?.id);
+    if (!client?.email) { Alert.alert(tr("quotes.noClientEmail") || "This client has no email address."); return; }
+    const result = await sendQuoteEmail(quote, client, profile);
+    if (result.success) {
+      Alert.alert(tr("quotes.emailedTitle") || "Sent!", tr("quotes.emailedSentTo", { email: client.email }) || `Quote sent to ${client.email}`);
+      if (quote.status === "draft") {
+        const { data } = await updateQuote(quote.id, { status: "sent" });
+        if (data) setQuotes(prev => prev.map(q => q.id === quote.id ? data : q));
+      }
+    } else {
+      Alert.alert(tr("quotes.emailFailedTitle") || "Failed to send", result.error);
+    }
+  }
+
+  // Crée VRAIMENT un chantier — avant, cette fonction changeait juste le
+  // statut sur "converted" et affichait une alerte "chantier créé"
+  // mensongère, sans jamais toucher la table jobs.
   async function convertToJob(quote) {
     Alert.alert(tr("quotes.screen.alerts.convertTitle"), tr("quotes.screen.alerts.convertMessage"),[
       {text:tr("quotes.screen.common.cancel"),style:"cancel"},
       {text:tr("quotes.screen.common.convert"),onPress:async()=>{
-        await updateQuote(quote.id, { status:"converted" });
-        setQuotes(prev=>prev.map(q=>q.id===quote.id?{...q,status:"converted"}:q));
-        Alert.alert(tr("quotes.screen.alerts.jobCreated"));
+        try {
+          const { data: newJob, error: jobErr } = await createJob(profile.id, {
+            client_id: quote.client_id,
+            title: quote.title,
+            date: today(),
+            time: "09:00",
+            duration: 4,
+            status: "scheduled",
+            notes: `From quote ${quote.quote_number}`,
+            amount: quote.total,
+          });
+          if (jobErr) throw jobErr;
+          const { data: updatedQuote, error: quoteErr } = await updateQuote(quote.id, { status: "converted", job_id: newJob.id });
+          if (quoteErr) throw quoteErr;
+          setQuotes(prev => prev.map(q => q.id === quote.id ? updatedQuote : q));
+          Alert.alert(tr("quotes.screen.alerts.jobCreated"));
+        } catch (err) {
+          console.error("[QuotesScreen] convert to job error:", err);
+          Alert.alert(tr("quotes.screen.alerts.errorConverting") || "Could not create the job. Please try again.");
+        }
       }}
     ]);
   }
@@ -159,7 +197,8 @@ export default function QuotesScreen() {
                   </View>
                   <View style={[SS.row, { marginTop:10, gap:8, flexWrap:"wrap" }]}>
                     {["draft","sent","viewed"].includes(q.status) && <Btn size="sm" variant="success" onPress={()=>{setSignSheet(q);setSignName("");}}>✍️ {tr("quotes.screen.signBtn")}</Btn>}
-                    {q.status==="accepted" && <Btn size="sm" onPress={()=>convertToJob(q)}>{tr("quotes.preview.convertToJob")}</Btn>}
+                    {["draft","sent","viewed"].includes(q.status) && <Btn size="sm" variant="ghost" onPress={()=>handleSendEmail(q)}>📧 {tr("quotes.emailShort") || "Email"}</Btn>}
+                    {q.status==="accepted" && !q.job_id && <Btn size="sm" onPress={()=>convertToJob(q)}>{tr("quotes.preview.convertToJob")}</Btn>}
                     <Btn size="sm" variant="danger" onPress={()=>handleDelete(q.id)}>{tr("quotes.screen.deleteBtn")}</Btn>
                   </View>
                 </Card>
@@ -205,11 +244,19 @@ export default function QuotesScreen() {
         ))}
         <Btn variant="ghost" size="sm" onPress={()=>setLines(p=>[...p,EMPTY_LINE()])} style={{ marginBottom:12 }}>{tr("quotes.lineItems.addLine")}</Btn>
 
+        <View style={[SS.spaceBetween, { marginBottom:12 }]}>
+          <Text style={{ fontSize:13, color:T.muted }}>{tr("quotes.fields.vatRate") || "VAT rate (%)"}</Text>
+          <View style={{ width:80 }}>
+            <Input value={form.vat_rate??"0"} onChangeText={v=>setForm(p=>({...p,vat_rate:v}))} keyboardType="decimal-pad" />
+          </View>
+        </View>
+
         {lines.length>0 && (()=>{
-          const t = calcTotals(lines);
+          const t = calcTotals(lines, parseFloat(form.vat_rate)||0);
           return (
             <View style={{ backgroundColor:T.surface2, borderRadius:T.r.md, padding:12, marginBottom:12 }}>
               <View style={SS.spaceBetween}><Text style={{ color:T.muted }}>{tr("quotes.totals.subtotal")}</Text><Text style={{ fontWeight:"700" }}>{fmt(t.subtotal)}</Text></View>
+              {t.vat_amount>0 && <View style={SS.spaceBetween}><Text style={{ color:T.muted }}>{tr("quotes.preview.vatLine", { rate: form.vat_rate }) || `VAT (${form.vat_rate}%)`}</Text><Text style={{ fontWeight:"700" }}>{fmt(t.vat_amount)}</Text></View>}
               <View style={SS.spaceBetween}><Text style={{ color:T.muted }}>{tr("quotes.screen.estMargin")}</Text><Text style={{ fontWeight:"700", color:t.margin_pct>25?T.green:T.amber }}>{t.margin_pct}%</Text></View>
               <View style={[SS.spaceBetween, { borderTopWidth:1, borderTopColor:T.border, paddingTop:8, marginTop:4 }]}><Text style={{ fontWeight:"800", fontSize:15 }}>{tr("quotes.totals.total")}</Text><Text style={{ fontWeight:"900", fontSize:18, color:T.brand }}>{fmt(t.total)}</Text></View>
             </View>
