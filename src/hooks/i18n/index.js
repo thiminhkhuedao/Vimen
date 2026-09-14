@@ -6,7 +6,7 @@ import fr from "./fr.js";
 const TRANSLATIONS = { en, fr };
 const SUPPORTED    = ["en", "fr"];
 const FALLBACK     = "en";
-const STORAGE_KEY  = "Vinem_language";
+const STORAGE_KEY  = "vimen_language";
 
 let _current = FALLBACK;
 

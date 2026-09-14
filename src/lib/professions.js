@@ -1,5 +1,9 @@
 // src/lib/professions.js
 
+function tOrFallback(t, key, fallback, options) {
+  return t ? t(key, { defaultValue: fallback, ...options }) : fallback;
+}
+
 export const VERTICALS = {
   trades: {
     id: "trades",
@@ -33,7 +37,11 @@ export const VERTICALS = {
       serviceLabel: "Job type",
     },
     // Which extra profile fields matter for this vertical
-    profileFields: ["hourly_rate", "certifications", "insurance"],
+    profileFields: [
+      { key: "insurance_provider", label: "Public liability insurer", type: "text", placeholder: "e.g. Simply Business" },
+      { key: "insurance_amount",   label: "Cover amount",             type: "text", placeholder: "e.g. €2,000,000" },
+      { key: "vat_registered",     label: "VAT registered",           type: "boolean" },
+    ],
   },
 
   beauty: {
@@ -64,7 +72,17 @@ export const VERTICALS = {
       rateLabel: "Price per service",
       serviceLabel: "Service",
     },
-    profileFields: ["service_menu", "portfolio_images", "qualifications"],
+    profileFields: [
+      {
+        key: "service_menu", label: "Service menu", type: "list",
+        itemFields: [
+          { key: "name",     label: "Service name", type: "text",   placeholder: "e.g. Gel manicure" },
+          { key: "duration", label: "Duration (min)", type: "text", placeholder: "45" },
+          { key: "price",    label: "Price (€)",      type: "text", placeholder: "35" },
+        ],
+      },
+      { key: "instagram_handle", label: "Instagram handle", type: "text", placeholder: "@yoursalon" },
+    ],
   },
 
   professional: {
@@ -93,7 +111,14 @@ export const VERTICALS = {
       rateLabel: "Consultation rate",
       serviceLabel: "Consultation type",
     },
-    profileFields: ["bar_number", "professional_body", "gdpr_statement"],
+    profileFields: [
+      { key: "bar_number",        label: "Bar number / registration ID", type: "text", placeholder: "e.g. Ordre des Avocats de Rouen — 12345" },
+      { key: "professional_body", label: "Professional body",            type: "text", placeholder: "e.g. Ordre des Avocats" },
+      {
+        key: "gdpr_accepted", label: "GDPR-compliant client data handling", type: "boolean",
+        helpText: "Confirms client information is stored and processed in line with GDPR — shown on your booking page.",
+      },
+    ],
   },
 
   other: {
@@ -134,4 +159,32 @@ export function getTerms(profession) {
 
 export function getVerticalColor(profession) {
   return getVerticalForProfession(profession).color;
+}
+
+function translateField(field, keyPath, t) {
+  const path = `${keyPath}.${field.key}`;
+  const out = {
+    ...field,
+    label: tOrFallback(t, `professions.fields.${path}.label`, field.label),
+  };
+  if (field.placeholder) {
+    out.placeholder = tOrFallback(t, `professions.fields.${path}.placeholder`, field.placeholder);
+  }
+  if (field.helpText) {
+    out.helpText = tOrFallback(t, `professions.fields.${path}.helpText`, field.helpText);
+  }
+  if (field.itemFields) {
+    out.itemFields = field.itemFields.map(sf => translateField(sf, `${path}.items`, t));
+  }
+  return out;
+}
+
+// Manquait complètement côté mobile — importée dans settings.js mais
+// jamais exportée ici, ce qui fait planter l'écran dès l'ouverture de
+// l'onglet Compte (getProfileFields is not a function).
+export function getProfileFields(profession, t) {
+  const vertical = getVerticalForProfession(profession);
+  const raw = vertical.profileFields ?? [];
+  if (!t) return raw;
+  return raw.map(f => translateField(f, vertical.id, t));
 }
