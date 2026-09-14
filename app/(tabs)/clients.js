@@ -5,6 +5,7 @@ import {
   RefreshControl, Alert, TextInput,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { useProfile } from "../../src/hooks/useProfile";
 import { getClients, getJobs, getInvoices, createClient, updateClient, deleteClient } from "../../src/lib/db";
 import { withTimeout } from "../../src/lib/withTimeout";
@@ -16,6 +17,7 @@ const MAX_RETRIES = 2;
 
 export default function ClientsScreen() {
   const insets      = useSafeAreaInsets();
+  const router      = useRouter();
   const { t }       = useTranslation();
   const { profile } = useProfile();
   const [clients,  setClients]  = useState([]);

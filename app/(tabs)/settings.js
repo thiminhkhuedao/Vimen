@@ -5,9 +5,13 @@ import {
   View, Text, ScrollView, TouchableOpacity, Alert, Switch,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useLocalSearchParams } from "expo-router";
+import { useAuth } from "@clerk/clerk-expo";
 import { supabase } from "../../src/lib/supabase";
 import { updateProfile } from "../../src/lib/db";
 import { Card, Btn, Avatar, Field, Input, SelectPicker, Divider } from "../../src/components/UI";
+import PrivacyControls from "../../src/components/PrivacyControls";
+import SecuritySettings from "../../src/components/SecuritySettings";
 import { T, SS } from "../../src/styles/tokens";
 import { VERTICALS, getVerticalForProfession, getProfileFields } from "../../src/lib/professions";
 import { useTranslation } from "../../src/hooks/i18n/index.js";
@@ -16,8 +20,9 @@ export default function SettingsScreen() {
   const insets       = useSafeAreaInsets();
   const { profile, setProfile, loading } = useProfile();
   const { t, lang, setLanguage, languages } = useTranslation();
-  const signOut = () => supabase.auth.signOut();
-  const [tab,    setTab]    = useState("account");
+  const { signOut } = useAuth(); // Clerk gère l'auth mobile — Supabase n'y est plus pour rien
+  const params = useLocalSearchParams();
+  const [tab,    setTab]    = useState(params.tab || "account");
   const [form,   setForm]   = useState({});
   const [saving, setSaving] = useState(false);
 
@@ -72,13 +77,8 @@ export default function SettingsScreen() {
     ["account",  t("settings.tabs.account")],
     ["payment",  t("settings.tabs.payment")],
     ["notifs",   t("settings.tabs.notifs")],
-    ["plan",     t("settings.tabs.plan")],
+    ["privacy",  t("settings.tabs.privacy") || "Confidentialité"],
     ["language", t("settings.tabs.language")],
-  ];
-
-  const PLANS = [
-    { key: "free", name: t("settings.plan.plans.free.name"), price: t("settings.plan.plans.free.price"), features: t("settings.plan.plans.free.features"), hi: false },
-    { key: "pro",  name: t("settings.plan.plans.pro.name"),  price: t("settings.plan.plans.pro.price"),  features: t("settings.plan.plans.pro.features"),  hi: true  },
   ];
 
   const NOTIF_ROWS = [
@@ -191,47 +191,16 @@ export default function SettingsScreen() {
           </Card>
         )}
 
-        {/* ── PLAN ── */}
-        {tab === "plan" && (
-          <View>
-            <Card style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 15, fontWeight: "700", marginBottom: 6 }}>{t("settings.plan.current")}</Text>
-              <View style={SS.row}>
-                <View style={{ backgroundColor: profile?.plan === "pro" ? T.brandLight : T.surface2, borderRadius: T.r.full, paddingHorizontal: 14, paddingVertical: 5 }}>
-                  <Text style={{ fontWeight: "700", color: profile?.plan === "pro" ? T.brand : T.muted, fontSize: 13 }}>
-                    {profile?.plan === "pro" ? t("settings.plan.pro") : t("settings.plan.free")}
-                  </Text>
-                </View>
-              </View>
-            </Card>
-            {PLANS.map(p => (
-              <Card key={p.key} style={{ marginBottom: 12, borderWidth: p.hi ? 2 : 1, borderColor: p.hi ? T.brand : T.border }}>
-                {p.hi && <View style={{ backgroundColor: T.brand, borderRadius: T.r.full, alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 3, marginBottom: 8 }}>
-                  <Text style={{ color: "#fff", fontSize: 11, fontWeight: "800" }}>{t("settings.plan.mostPopular")}</Text>
-                </View>}
-                <Text style={{ fontSize: 17, fontWeight: "800", marginBottom: 2 }}>{p.name}</Text>
-                <Text style={{ fontSize: 26, fontWeight: "900", color: p.hi ? T.brand : T.text, letterSpacing: -1, marginBottom: 12 }}>{p.price}</Text>
-                {p.features.map(f => (
-                  <View key={f} style={[SS.row, { gap: 8, marginBottom: 6 }]}>
-                    <Text style={{ color: p.hi ? T.brand : T.green }}>✓</Text>
-                    <Text style={{ fontSize: 13, color: T.muted }}>{f}</Text>
-                  </View>
-                ))}
-                {profile?.plan !== p.key && (
-                  <Btn style={{ marginTop: 12 }} variant={p.hi ? "primary" : "ghost"} onPress={() => Alert.alert(t("settings.plan.comingSoonTitle"), t("settings.plan.comingSoonMsg"))}>
-                    {p.hi ? t("settings.plan.upgrade") : t("settings.plan.downgrade")}
-                  </Btn>
-                )}
-                {profile?.plan === p.key && (
-                  <View style={{ marginTop: 12, alignItems: "center" }}>
-                    <Text style={{ color: T.brand, fontWeight: "700", fontSize: 13 }}>{t("settings.plan.currentPlanLabel")}</Text>
-                  </View>
-                )}
-              </Card>
-            ))}
-            <Btn variant="danger" onPress={() => Alert.alert(t("settings.plan.signOutConfirmTitle"), t("settings.plan.signOutConfirmMsg"), [{ text:t("settings.plan.cancel"),style:"cancel" },{ text:t("settings.plan.signOut"),style:"destructive",onPress:signOut }])} style={{ marginTop: 8 }}>
-              {t("settings.plan.signOut")}
-            </Btn>
+        {tab === "privacy" && (
+          <View style={{ gap: 24 }}>
+            <SecuritySettings />
+            <View>
+              <Text style={{ fontSize:15, fontWeight:"700", marginBottom:6 }}>Tes données personnelles</Text>
+              <Text style={{ fontSize:13, color:T.muted, marginBottom:16 }}>
+                Exporte une copie de tes données, ou supprime définitivement ton compte.
+              </Text>
+              <PrivacyControls />
+            </View>
           </View>
         )}
 
@@ -259,6 +228,21 @@ export default function SettingsScreen() {
             ))}
           </View>
         )}
+
+        <Btn
+          variant="danger"
+          onPress={() => Alert.alert(
+            t("settings.plan.signOutConfirmTitle"),
+            t("settings.plan.signOutConfirmMsg"),
+            [
+              { text: t("settings.plan.cancel"), style: "cancel" },
+              { text: t("settings.plan.signOut"), style: "destructive", onPress: signOut },
+            ]
+          )}
+          style={{ marginTop: 24 }}
+        >
+          {t("settings.plan.signOut")}
+        </Btn>
       </ScrollView>
     </View>
   );
