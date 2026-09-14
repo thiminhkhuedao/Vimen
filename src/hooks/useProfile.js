@@ -1,5 +1,5 @@
 // src/hooks/useProfile.js — Clerk auth (mobile)
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { getProfile, createProfile } from "../lib/db";
 import { withTimeout } from "../lib/withTimeout";
@@ -82,5 +82,17 @@ export function useProfile() {
     return () => { cancelled = true; };
   }, [isLoaded, isSignedIn, user?.id]);
 
-  return { profile, setProfile, loading, error };
+  // Rafraîchissement manuel — utilisé après une action qui modifie le
+  // profil côté serveur (connexion Stripe, sauvegarde IBAN, etc.) pour
+  // que l'UI reflète l'état à jour sans devoir remonter tout l'écran.
+  // Volontairement simple (pas de retry/cancellation comme le chargement
+  // initial) : un échec ici peut juste être retenté par l'utilisateur.
+  const refresh = useCallback(async () => {
+    if (!user) return;
+    const { data, error: fetchErr } = await getProfile(user.id);
+    if (!fetchErr && data) setProfile(data);
+    return { data, error: fetchErr };
+  }, [user]);
+
+  return { profile, setProfile, loading, error, refresh };
 }

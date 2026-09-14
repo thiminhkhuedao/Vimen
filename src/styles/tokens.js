@@ -30,6 +30,8 @@ export const T = {
   redBg:   "#FEECEC",
   blue:    "#1D4ED8",
   blueBg:  "#EFF6FF",
+  purple:   "#6D28D9",
+  purpleBg: "#F3EEFF",
 
   // Typography
   fontSizes: {

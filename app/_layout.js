@@ -5,9 +5,20 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
+import * as Sentry from "@sentry/react-native";
 import { setClerkTokenGetter } from "../src/lib/supabase";
 import { useProfile } from "../src/hooks/useProfile";
 import { usePushNotifications } from "../src/hooks/usePushNotifications";
+import { ErrorBoundary } from "../src/components/ErrorBoundary";
+
+// Capture toutes les erreurs JS non gérées en prod, même logique que côté
+// web (voir src/main.jsx du repo web) — mais avec le SDK dédié React
+// Native, pas @sentry/react. Nécessite : npx expo install @sentry/react-native
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  enabled: !__DEV__, // rien envoyé en dev local, seulement en vraie build
+  tracesSampleRate: 0.1,
+});
 
 // Clerk's recommended token cache for Expo — stores the short-lived
 // session token in SecureStore. This stays small (unlike the full
@@ -60,18 +71,20 @@ function PushNotificationRegistrar() {
 
 export default function RootLayout() {
   return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaProvider>
-          <ClerkToSupabaseBridge />
-          <PushNotificationRegistrar />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="(screens)" />
-          </Stack>
-        </SafeAreaProvider>
-      </GestureHandlerRootView>
-    </ClerkProvider>
+    <ErrorBoundary>
+      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <SafeAreaProvider>
+            <ClerkToSupabaseBridge />
+            <PushNotificationRegistrar />
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="(screens)" />
+            </Stack>
+          </SafeAreaProvider>
+        </GestureHandlerRootView>
+      </ClerkProvider>
+    </ErrorBoundary>
   );
 }
