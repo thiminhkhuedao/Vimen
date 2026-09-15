@@ -44,7 +44,7 @@ const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 if (!publishableKey) {
   console.warn(
-    "[Vinem] Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY — add it to your .env"
+    "[vimen] Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY — add it to your .env"
   );
 }
 

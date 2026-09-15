@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Vinem",
-    "slug": "Vinem-app",
+    "name": "vimen",
+    "slug": "vimen-app",
     "version": "1.0.0",
     "sdkVersion": "54.0.0",
     "orientation": "portrait",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "app.Vinem.mobile",
+      "bundleIdentifier": "app.vimen.mobile",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -24,7 +24,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#E8500A"
       },
-      "package": "app.Vinem.mobile"
+      "package": "app.vimen.mobile"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -41,7 +41,7 @@
         }
       ]
     ],
-    "scheme": "Vinem",
+    "scheme": "vimen",
     "experiments": {
       "typedRoutes": true
     },

@@ -1,8 +1,8 @@
-# Vinem — Mobile (Expo)
+# vimen — Mobile (Expo)
 
 A mobile application for booking, invoicing, and payment management designed for freelancers and small businesses across various industries — including trades & construction, beauty & wellness, and professional services.
 
-Vinem helps independent professionals manage quotes, appointments, invoices, and payments in one place, with support for both English and French.
+vimen helps independent professionals manage quotes, appointments, invoices, and payments in one place, with support for both English and French.
 
 ## Tech Stack
 
@@ -70,8 +70,8 @@ EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 
 ## Application Identifiers
 
-- iOS Bundle ID / Android Package: `app.Vinem.mobile`
-- Deep Link Scheme: `Vinem`
+- iOS Bundle ID / Android Package: `app.vimen.mobile`
+- Deep Link Scheme: `vimen`
 - EAS Project ID: `85787e1d-b789-4156-b10b-7f669c2df438`
 - Brand Color (splash screen / adaptive icon): `#E8500A`
 
@@ -198,7 +198,7 @@ expo-image-picker
 
 # Internationalization (i18n)
 
-Vinem uses a custom translation engine located in:
+vimen uses a custom translation engine located in:
 
 ```
 src/hooks/i18n/

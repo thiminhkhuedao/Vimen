@@ -42,7 +42,7 @@ export default {
   auth: {
     welcomeBack: "Welcome back",
     createAccount: "Create account",
-    signInSub: "Sign in to your Vinem account",
+    signInSub: "Sign in to your vimen account",
     signUpSub: "Start for free — no card needed",
     email: "Email address",
     password: "Password",
@@ -64,7 +64,7 @@ export default {
     heroSub: "Trades, beauty & wellness, or professional services — quotes, appointments, invoices and payments, all in one place.",
     feature1: "{{bookingPlural}} clients book themselves",
     feature2: "Invoice and get paid",
-    feature3: "Vinem Pay — 2% flat",
+    feature3: "vimen Pay — 2% flat",
     feature4: "Built for {{vertical}}",
     feature5: "Automatic review requests"
   },
@@ -75,7 +75,7 @@ export default {
     clients: "Clients",
     invoices: "Invoices",
     booking: "Booking",
-    payments: "Vinem Pay",
+    payments: "vimen Pay",
     marketplace: "Marketplace",
     reviews: "Reviews",
     referrals: "Referrals",
@@ -476,9 +476,9 @@ export default {
     saveAvailability: "Save availability"
   },
   payments: {
-    title: "Vinem Pay 💳",
+    title: "vimen Pay 💳",
     overview: {
-      activeBanner: "✓ Vinem Pay active",
+      activeBanner: "✓ vimen Pay active",
       connected: "Connected",
       recentPayments: "Recent payments",
       noPayments: "No payments yet",
@@ -514,8 +514,8 @@ export default {
       feeRows: {
         stripeProcessing: "Stripe processing",
         stripeProcessingNote: "Standard UK rate",
-        VinemPay: "Vinem Pay",
-        VinemPayNote: "Platform fee",
+        vimenPay: "vimen Pay",
+        vimenPayNote: "Platform fee",
         total: "Total",
         totalNote: "On a €500 invoice = €17"
       },
@@ -538,9 +538,9 @@ export default {
     feeTitle: "Fee breakdown — example €550 invoice",
     invoiceAmount: "Invoice amount",
     stripeFee: "Stripe fee (1.4%+20p)",
-    VinemFee: "Vinem Pay (2%)",
+    vimenFee: "vimen Pay (2%)",
     youReceive: "You receive",
-    connected: "✓ Vinem Pay active",
+    connected: "✓ vimen Pay active",
     autoPayouts: "🏦 Automatic payouts",
     autoPayoutsSub: "Earnings are automatically paid out every 2 business days to your connected bank account.",
     noPayouts: "No payouts yet",
@@ -570,7 +570,7 @@ export default {
       title: "Fee breakdown — example €550 invoice",
       invoiceAmount: "Invoice amount",
       stripeFee: "Stripe fee (1.4%+20p)",
-      VinemPayFee: "Vinem Pay (2%)",
+      vimenPayFee: "vimen Pay (2%)",
       youReceive: "You receive"
     },
     status: {
@@ -894,7 +894,7 @@ export default {
     referSomeoneBtn: "Refer someone",
     modal: {
       title: "Refer a tradesperson",
-      intro: "Know another electrician, plumber, or builder who'd benefit from Vinem? When they sign up and complete their first job, you both get 2 months Pro free.",
+      intro: "Know another electrician, plumber, or builder who'd benefit from vimen? When they sign up and complete their first job, you both get 2 months Pro free.",
       theirNameLabel: "Their name (optional)",
       theirEmailLabel: "Their email *",
       giftNote: "They'll get a personal invite from you with your referral link. When they activate their account, you both get 2 months Pro free.",
@@ -936,7 +936,7 @@ export default {
     reward: "+{{months}}mo Pro",
     sending: "Sending…",
     sendCta: "Send referral invite",
-    linkSub: "Share this with any tradesperson you know. When they complete their first job on Vinem, you both get {{months}} months Pro free.",
+    linkSub: "Share this with any tradesperson you know. When they complete their first job on vimen, you both get {{months}} months Pro free.",
     status: {
       pending: "Pending",
       signed_up: "Signed up",
@@ -951,7 +951,7 @@ export default {
       },
       linkCard: {
         title: "Your referral link",
-        bodyPrefix: "Share this with any tradesperson you know. When they complete their first job on Vinem, you both get ",
+        bodyPrefix: "Share this with any tradesperson you know. When they complete their first job on vimen, you both get ",
         boldPhrase: "2 months Pro free",
         bodySuffix: ".",
         shareLinkBtn: "Share link",
@@ -969,7 +969,7 @@ export default {
         },
         step3: {
           title: "They complete a job",
-          desc: "After their first job on Vinem, the referral qualifies."
+          desc: "After their first job on vimen, the referral qualifies."
         },
         step4: {
           title: "You both get 2 months Pro free",
@@ -995,7 +995,7 @@ export default {
         failedToSend: "Failed to send referral",
         sentTitle: "✓ Referral sent!",
         sentMessage: "Invite sent to {{email}}",
-        shareMessage: "I've been using Vinem to run my trade business — dead simple for quoting, invoicing and getting paid. Sign up free: {{url}}"
+        shareMessage: "I've been using vimen to run my trade business — dead simple for quoting, invoicing and getting paid. Sign up free: {{url}}"
       }
     },
     savedOpeningMail: "Saved! Opening your mail app to complete delivery..."
@@ -1162,7 +1162,7 @@ export default {
         desc: "Create quotes, get client sign-off"
       },
       payments: {
-        label: "Vinem Pay",
+        label: "vimen Pay",
         desc: "Payments, transactions, payouts"
       },
       marketplace: {
