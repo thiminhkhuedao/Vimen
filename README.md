@@ -8,7 +8,7 @@ vimen helps independent professionals manage quotes, appointments, invoices, and
 
 | | |
 |---|---|
-| Framework | Expo SDK 54 (managed workflow) |
+| Framework | Expo SDK 57 (managed workflow) |
 | Routing | `expo-router` v6, file-based routing with typed routes enabled |
 | UI | React 19.1.0 / React Native 0.81.5 |
 | Authentication | Clerk (`@clerk/clerk-expo`) |
