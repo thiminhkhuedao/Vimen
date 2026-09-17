@@ -48,8 +48,22 @@ export default {
     password: "Password",
     passwordMin: "Min. 8 characters",
     fullName: "Full name",
+    username: "Username",
     profession: "Your profession",
     forgotPassword: "Forgot password?",
+    continueWithGoogle: "Continue with Google",
+    orDivider: "or",
+    forgotPasswordTitle: "Reset your password",
+    forgotPasswordSub: "Enter your email and we'll send you a reset code.",
+    sendResetCode: "Send reset code",
+    sendingResetCode: "Sending…",
+    resetCodeLabel: "Reset code",
+    newPassword: "New password",
+    resetPasswordBtn: "Reset password",
+    resettingPassword: "Resetting…",
+    backToSignIn: "← Back to sign in",
+    backToSignUp: "← Back to sign up",
+    resetCodeSent: "We sent a 6-digit code to {{email}}",
     noAccount: "Don't have an account?",
     alreadyAccount: "Already have an account?",
     signUpFree: "Sign up free",
@@ -1194,7 +1208,7 @@ export default {
     }
   },
   actions: {
-    loading: "Chargement...",
-    save: "Enregistrer"
+    loading: "Loading...",
+    save: "Saved"
   }
 };

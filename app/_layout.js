@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
+import * as WebBrowser from "expo-web-browser";
 import * as Sentry from "@sentry/react-native";
 import { setClerkTokenGetter } from "../src/lib/supabase";
 import { useProfile } from "../src/hooks/useProfile";
@@ -39,6 +40,11 @@ const tokenCache = {
     }
   },
 };
+
+// Requis pour que le flux OAuth (Google, etc.) referme correctement le
+// navigateur système après authentification et renvoie la main à l'app.
+// Doit être appelé une seule fois, au chargement du module.
+WebBrowser.maybeCompleteAuthSession();
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 

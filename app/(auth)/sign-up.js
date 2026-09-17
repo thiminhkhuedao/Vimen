@@ -1,20 +1,26 @@
 // app/(auth)/sign-up.js
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ScrollView, Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useSignUp } from "@clerk/clerk-expo";
+import { useSignUp, useOAuth } from "@clerk/clerk-expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { T } from "../../src/styles/tokens";
 import { checkRateLimit } from "../../src/lib/security";
 import Turnstile from "../../src/components/Turnstile";
+import { useTranslation } from "../../src/hooks/i18n/index.js";
+import { useWarmUpBrowser } from "../../src/hooks/useWarmUpBrowser";
 
 export default function SignUpScreen() {
+  useWarmUpBrowser();
+
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useTranslation();
   const { signUp, setActive, isLoaded } = useSignUp();
+  const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
 
   const [step, setStep]       = useState("form"); // "form" | "verify"
   const [name, setName]       = useState("");
@@ -23,6 +29,7 @@ export default function SignUpScreen() {
   const [pass, setPass]       = useState("");
   const [code, setCode]       = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError]     = useState("");
   const [captchaToken, setCaptchaToken] = useState(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -58,6 +65,21 @@ export default function SignUpScreen() {
     setLoading(false);
   }
 
+  const onGooglePress = useCallback(async () => {
+    setGoogleLoading(true);
+    try {
+      const { createdSessionId, setActive: oauthSetActive } = await startOAuthFlow();
+      if (createdSessionId && oauthSetActive) {
+        await oauthSetActive({ session: createdSessionId });
+        router.replace("/(tabs)");
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Google sign up failed", err.errors?.[0]?.longMessage || err.message || "Please try again.");
+    }
+    setGoogleLoading(false);
+  }, [startOAuthFlow, router]);
+
   async function verify() {
     if (!isLoaded) return;
     setError("");
@@ -87,15 +109,15 @@ export default function SignUpScreen() {
       <KeyboardAvoidingView style={{ flex: 1, backgroundColor: T.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24, paddingTop: insets.top + 40 }} keyboardShouldPersistTaps="handled">
           <Text style={{ fontSize: 32, textAlign: "center", marginBottom: 16 }}>📬</Text>
-          <Text style={{ fontSize: 20, fontWeight: "800", textAlign: "center", marginBottom: 8 }}>Check your email</Text>
+          <Text style={{ fontSize: 20, fontWeight: "800", textAlign: "center", marginBottom: 8 }}>{t("auth.verifyEmail")}</Text>
           <Text style={{ fontSize: 14, color: T.muted, textAlign: "center", marginBottom: 28, lineHeight: 20 }}>
-            We sent a 6-digit code to {email}. Enter it below to verify your account.
+            {t("auth.verifyCode", { email })}
           </Text>
 
           <TextInput
             style={{ ...inputStyle, fontSize: 28, fontWeight: "800", letterSpacing: 8, textAlign: "center" }}
             value={code}
-            onChangeText={t => setCode(t.replace(/\D/g, "").slice(0, 6))}
+            onChangeText={v => setCode(v.replace(/\D/g, "").slice(0, 6))}
             placeholder="000000"
             placeholderTextColor={T.hint}
             maxLength={6}
@@ -118,12 +140,12 @@ export default function SignUpScreen() {
             }}
           >
             <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>
-              {loading ? "Verifying…" : "Verify email →"}
+              {loading ? t("auth.verifying") : `${t("auth.verifyEmail2")} →`}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => { setStep("form"); setError(""); }} style={{ marginTop: 16, alignItems: "center" }}>
-            <Text style={{ color: T.muted, fontSize: 13, textDecorationLine: "underline" }}>← Back to sign up</Text>
+            <Text style={{ color: T.muted, fontSize: 13, textDecorationLine: "underline" }}>{t("auth.backToSignUp")}</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -134,19 +156,47 @@ export default function SignUpScreen() {
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: T.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24, paddingTop: insets.top + 40 }} keyboardShouldPersistTaps="handled">
         <Text style={{ fontSize: 28, fontWeight: "900", color: T.brand, marginBottom: 6, letterSpacing: -0.5 }}>⚡ vimen</Text>
-        <Text style={{ fontSize: 22, fontWeight: "800", color: T.text, marginBottom: 6 }}>Create account</Text>
-        <Text style={{ fontSize: 14, color: T.muted, marginBottom: 24 }}>Start for free — no card needed</Text>
+        <Text style={{ fontSize: 22, fontWeight: "800", color: T.text, marginBottom: 6 }}>{t("auth.createAccount")}</Text>
+        <Text style={{ fontSize: 14, color: T.muted, marginBottom: 24 }}>{t("auth.signUpSub")}</Text>
 
-        <Field label="Full name">
+        <TouchableOpacity
+          onPress={onGooglePress}
+          disabled={googleLoading}
+          style={{
+            flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
+            borderWidth: 1, borderColor: T.borderMed ?? "#00000022", borderRadius: 10,
+            padding: 14, backgroundColor: T.surface, opacity: googleLoading ? 0.6 : 1, marginBottom: 20,
+          }}
+        >
+          <View style={{
+            width: 20, height: 20, borderRadius: 10, backgroundColor: "#fff",
+            alignItems: "center", justifyContent: "center",
+          }}>
+            <Text style={{ fontSize: 13, fontWeight: "800", color: "#4285F4" }}>G</Text>
+          </View>
+          <Text style={{ fontSize: 15, fontWeight: "600", color: T.text }}>
+            {googleLoading ? "…" : t("auth.continueWithGoogle")}
+          </Text>
+        </TouchableOpacity>
+
+        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+          <View style={{ flex: 1, height: 1, backgroundColor: T.border }} />
+          <Text style={{ marginHorizontal: 12, fontSize: 12, color: T.muted, textTransform: "uppercase" }}>
+            {t("auth.orDivider")}
+          </Text>
+          <View style={{ flex: 1, height: 1, backgroundColor: T.border }} />
+        </View>
+
+        <Field label={t("auth.fullName")}>
           <TextInput style={inputStyle} value={name} onChangeText={setName} placeholder="Jake Morrison" placeholderTextColor={T.hint} autoFocus/>
         </Field>
-        <Field label="Username">
-          <TextInput style={inputStyle} value={username} onChangeText={t => setUsername(t.replace(/\s/g, ""))} placeholder="jakemorrison" placeholderTextColor={T.hint} autoCapitalize="none"/>
+        <Field label={t("auth.username")}>
+          <TextInput style={inputStyle} value={username} onChangeText={v => setUsername(v.replace(/\s/g, ""))} placeholder="jakemorrison" placeholderTextColor={T.hint} autoCapitalize="none"/>
         </Field>
-        <Field label="Email">
+        <Field label={t("auth.email")}>
           <TextInput style={inputStyle} value={email} onChangeText={setEmail} placeholder="you@example.com" placeholderTextColor={T.hint} autoCapitalize="none" keyboardType="email-address"/>
         </Field>
-        <Field label="Password">
+        <Field label={t("auth.password")}>
           <TextInput style={inputStyle} value={pass} onChangeText={setPass} placeholder="••••••••" placeholderTextColor={T.hint} secureTextEntry/>
         </Field>
 
@@ -196,14 +246,14 @@ export default function SignUpScreen() {
           }}
         >
           <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>
-            {loading ? "Please wait…" : "Create account →"}
+            {loading ? t("auth.creatingAccount") : `${t("auth.createAccount")} →`}
           </Text>
         </TouchableOpacity>
 
         <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 24 }}>
-          <Text style={{ fontSize: 14, color: T.muted }}>Already signed up? </Text>
+          <Text style={{ fontSize: 14, color: T.muted }}>{t("auth.alreadyAccount")} </Text>
           <TouchableOpacity onPress={() => router.push("/(auth)/sign-in")}>
-            <Text style={{ fontSize: 14, color: T.brand, fontWeight: "700" }}>Sign in</Text>
+            <Text style={{ fontSize: 14, color: T.brand, fontWeight: "700" }}>{t("common.signIn")}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
