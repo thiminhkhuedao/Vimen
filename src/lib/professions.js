@@ -1,7 +1,22 @@
 // src/lib/professions.js
 
-function tOrFallback(t, key, fallback, options) {
-  return t ? t(key, { defaultValue: fallback, ...options }) : fallback;
+// CORRECTIF : la version précédente passait { defaultValue: fallback }
+// en supposant que t() supporte cette option — ce n'est pas le cas ici
+// (voir src/hooks/i18n/index.js : t() renvoie juste la clé brute si elle
+// n'existe pas, aucune notion de defaultValue). On détecte donc le cas
+// "clé manquante" en comparant le résultat à la clé elle-même.
+function tOrFallback(t, key, fallback, vars) {
+  if (!t) return fallback;
+  const result = t(key, vars);
+  return result === key ? fallback : result;
+}
+
+// Manquait complètement — importée dans app/(tabs)/more.js mais jamais
+// exportée ici, ce qui faisait planter tout l'écran "More" au montage
+// (TypeError: undefined is not a function).
+export function getProfessionLabel(profession, t) {
+  if (!profession) return profession;
+  return tOrFallback(t, `professions.professionNames.${profession}`, profession);
 }
 
 export const VERTICALS = {
