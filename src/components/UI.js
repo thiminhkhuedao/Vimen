@@ -48,7 +48,7 @@ export function Btn({ variant = "primary", size = "md", onPress, children, disab
         ...pd,
       }, style]}
     >
-      {typeof children === "string"
+      {typeof children === "string" || Array.isArray(children)
         ? <Text style={{ color, fontSize: fs, fontWeight: "600" }}>{children}</Text>
         : children}
     </TouchableOpacity>
