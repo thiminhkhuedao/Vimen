@@ -12,14 +12,25 @@ const handle = async (query) => {
 export const getProfile = (userId) =>
   handle(supabase.from("profiles").select("*").eq("clerk_id", userId).single());
 
-export const createProfile = (userId, { name, email, trade = "" }) => {
+export const createProfile = async (userId, { name, email, trade = "" }) => {
   const slug = name.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9]/g, "") +
                Math.floor(Math.random() * 900 + 100);
-  return handle(
-    supabase.from("profiles")
-      .insert({ clerk_id: userId, name, email, trade, booking_slug: slug })
-      .select().single()
-  );
+
+  const { data, error } = await supabase.from("profiles")
+    .insert({ clerk_id: userId, name, email, trade, booking_slug: slug })
+    .select().single();
+
+  // Course entre deux appels concurrents (ex: double-mount en mode strict
+  // React) — l'autre a déjà créé le profil entre-temps. Plutôt que de
+  // planter, on récupère simplement le profil qui existe déjà.
+  if (error?.code === "23505") {
+    return handle(
+      supabase.from("profiles").select("*").eq("clerk_id", userId).single()
+    );
+  }
+
+  if (error) console.error("[db]", error.message);
+  return { data, error };
 };
 
 export const updateProfile = (userId, updates) =>
