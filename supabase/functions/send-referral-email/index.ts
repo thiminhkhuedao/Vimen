@@ -9,13 +9,13 @@
 //   supabase secrets set RESEND_API_KEY=re_xxxxxxxxxxxxx
 //
 // Il faut aussi avoir vérifié un domaine d'envoi sur https://resend.com/domains
-// (ex: mail.tradie.app) et l'utiliser comme adresse "from" ci-dessous.
+// (ex: mail.Vimen.app) et l'utiliser comme adresse "from" ci-dessous.
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { checkRateLimit } from "../_shared/rateLimit.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const FROM_EMAIL = Deno.env.get("REFERRAL_FROM_EMAIL") || "Tradie <onboarding@resend.dev>";
+const FROM_EMAIL = Deno.env.get("REFERRAL_FROM_EMAIL") || "Vimen <onboarding@resend.dev>";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,7 +33,7 @@ function buildEmailHtml({ referredName, referrerName, referralUrl }: {
     <div style="font-family: -apple-system, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111827;">
       <h2 style="margin: 0 0 16px;">${greeting}</h2>
       <p style="font-size: 15px; line-height: 1.6;">
-        <strong>${referrerName || "Un(e) ami(e)"}</strong> vous invite à rejoindre Tradie,
+        <strong>${referrerName || "Un(e) ami(e)"}</strong> vous invite à rejoindre Vimen,
         la plateforme de gestion de rendez-vous et de clients pour les professionnels.
       </p>
       <p style="text-align: center; margin: 28px 0;">
@@ -93,7 +93,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: FROM_EMAIL,
         to: [to],
-        subject: `${referrerName || "Un(e) ami(e)"} vous invite à rejoindre Tradie`,
+        subject: `${referrerName || "Un(e) ami(e)"} vous invite à rejoindre Vimen`,
         html: buildEmailHtml({ referredName, referrerName, referralUrl }),
       }),
     });
