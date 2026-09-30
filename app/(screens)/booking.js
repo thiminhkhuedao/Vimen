@@ -36,6 +36,10 @@ export default function BookingScreen() {
   const [options,        setOptions]        = useState([]);
   const [optionsLoading, setOptionsLoading] = useState(true);
   const [optionSheet,    setOptionSheet]    = useState(null); // null | "add" | option object being edited
+  // typeof null === "object" en JS — sans cette garde explicite, les 5
+  // vérifications ci-dessous plantaient ou se trompaient dès que
+  // optionSheet valait null (notamment pendant la fermeture du sheet).
+  const isEditingOption = optionSheet !== null && typeof optionSheet === "object";
   const [optionForm,     setOptionForm]     = useState({ title:"", description:"", price:"", active:true });
   const [pickedImageUri, setPickedImageUri] = useState(null); // local URI, not yet uploaded
   const [savingOption,   setSavingOption]   = useState(false);
@@ -145,7 +149,7 @@ export default function BookingScreen() {
     if (!optionForm.title.trim()) { Alert.alert(t("booking.options.alerts.titleRequired")); return; }
     setSavingOption(true);
 
-    let image_url = typeof optionSheet === "object" ? optionSheet.image_url : undefined;
+    let image_url = isEditingOption ? optionSheet.image_url : undefined;
     if (pickedImageUri) {
       setUploadingImage(true);
       const { data: uploadedUrl, error: uploadError } = await uploadOptionImage(profile.id, pickedImageUri);
@@ -162,7 +166,7 @@ export default function BookingScreen() {
       ...(image_url !== undefined ? { image_url } : {}),
     };
 
-    const isEdit = typeof optionSheet === "object";
+    const isEdit = isEditingOption;
     const { data, error } = isEdit
       ? await updateServiceOption(optionSheet.id, payload)
       : await createServiceOption(profile.id, payload);
@@ -415,10 +419,10 @@ export default function BookingScreen() {
 
       {/* Add/Edit option sheet */}
       <Sheet visible={!!optionSheet} onClose={()=>{ setOptionSheet(null); setPickedImageUri(null); }}
-        title={typeof optionSheet==="object" ? t("booking.options.sheet.editTitle") : t("booking.options.sheet.addTitle")} height="88%">
+        title={isEditingOption ? t("booking.options.sheet.editTitle") : t("booking.options.sheet.addTitle")} height="88%">
         <Text style={{ fontSize:13, fontWeight:"500", color:T.muted, marginBottom:8 }}>{t("booking.options.sheet.imageLabel")}</Text>
         <TouchableOpacity onPress={pickImage} style={{ marginBottom:16 }}>
-          {(pickedImageUri || (typeof optionSheet==="object" && optionSheet.image_url)) ? (
+          {(pickedImageUri || (isEditingOption && optionSheet.image_url)) ? (
             <View>
               <Image source={{ uri: pickedImageUri || optionSheet.image_url }} style={{ width:"100%", height:160, borderRadius:T.r.md, backgroundColor:T.surface2 }}/>
               <View style={{ position:"absolute", bottom:8, right:8, backgroundColor:"rgba(0,0,0,0.6)", paddingHorizontal:10, paddingVertical:6, borderRadius:T.r.sm }}>
@@ -454,7 +458,7 @@ export default function BookingScreen() {
           {uploadingImage ? t("booking.options.sheet.uploading") : savingOption ? t("booking.options.sheet.saving") : t("booking.options.sheet.saveBtn")}
         </Btn>
 
-        {typeof optionSheet === "object" && (
+        {isEditingOption && (
           <Btn variant="danger" onPress={()=>setDeleteTarget(optionSheet)} style={{ marginTop:10, justifyContent:"center" }}>
             {t("booking.options.sheet.deleteBtn")}
           </Btn>
