@@ -316,4 +316,4 @@ export const getPayouts = (profileId) =>
    PUSH NOTIFICATIONS
 ══════════════════════════════════════════════════ */
 export const updatePushToken = (profileId, token) =>
-  handle(supabase.from("profiles").update({ push_token: token }).eq("id", profileId));
+  handle(supabase.from("profiles").update({ push_token: token }).eq("id", profileId));ss
