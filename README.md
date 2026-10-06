@@ -1,4 +1,4 @@
-# vimen — Mobile (Expo)
+# Vimen — Mobile (Expo)
 
 A mobile application for booking, invoicing, and payment management designed for freelancers and small businesses across various industries — including trades & construction, beauty & wellness, and professional services.
 
@@ -281,3 +281,11 @@ npm run android    # Run on Android
 npm run ios        # Run on iOS
 npm run web        # Run in browser
 ```
+
+---
+
+## Copyright
+
+Copyright © 2026 Your Name. All rights reserved.
+This project and its source code are public for portfolio viewing purposes only.
+No permission is granted to copy, distribute, modify, or use this code for any other purpose.
