@@ -200,8 +200,8 @@ export default function PaymentsScreen() {
               <View style={{ backgroundColor:T.amberBg, borderRadius:T.r.lg, padding:14, marginBottom:16 }}>
                 <Text style={{ fontWeight:"700", color:T.amber, marginBottom:4 }}>{t("payments.overview.notConnectedTitle")}</Text>
                 <Text style={{ fontSize:13, color:T.muted, marginBottom:12 }}>{t("payments.overview.notConnectedDesc")}</Text>
-                <Btn onPress={handleConnect} disabled={isLoading}>
-                  {isLoading ? (t("actions.loading") || "Chargement...") : t("payments.overview.connectStripeBtn")}
+                <Btn onPress={showComingSoon}>
+                  {t("payments.comingSoonBtn") || "Bientôt disponible"}
                 </Btn>
               </View>
             ) : (
@@ -353,16 +353,16 @@ export default function PaymentsScreen() {
                     <Btn variant="ghost" size="sm" style={{ flex:1 }} onPress={()=>Linking.openURL("https://dashboard.stripe.com")}>
                       {t("payments.connect.openDashboard")}
                     </Btn>
-                    <Btn size="sm" style={{ flex:1 }} onPress={handleSync} disabled={isLoading}>
-                      {isLoading ? (t("actions.loading") || "Chargement...") : (t("payments.connect.syncBtn") || "Synchroniser")}
+                    <Btn size="sm" style={{ flex:1 }} onPress={showComingSoon}>
+                      {t("payments.comingSoonBtn") || "Bientôt disponible"}
                     </Btn>
                   </View>
                 </View>
               ) : (
                 <View>
                   <Text style={{ fontSize:13, color:T.muted, marginBottom:16, lineHeight:20 }}>{t("payments.connect.notConnectedBody")}</Text>
-                  <Btn onPress={handleConnect} disabled={isLoading}>
-                    {isLoading ? "Chargement..." : t("payments.connect.connectAccountBtn")}
+                  <Btn onPress={showComingSoon}>
+                    {t("payments.comingSoonBtn") || "Bientôt disponible"}
                   </Btn>
                 </View>
               )}
