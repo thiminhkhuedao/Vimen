@@ -42,28 +42,14 @@ export default {
   auth: {
     welcomeBack: "Welcome back",
     createAccount: "Create account",
-    signInSub: "Sign in to your vimen account",
+    signInSub: "Sign in to your Vinem account",
     signUpSub: "Start for free — no card needed",
     email: "Email address",
     password: "Password",
     passwordMin: "Min. 8 characters",
     fullName: "Full name",
-    username: "Username",
     profession: "Your profession",
     forgotPassword: "Forgot password?",
-    continueWithGoogle: "Continue with Google",
-    orDivider: "or",
-    forgotPasswordTitle: "Reset your password",
-    forgotPasswordSub: "Enter your email and we'll send you a reset code.",
-    sendResetCode: "Send reset code",
-    sendingResetCode: "Sending…",
-    resetCodeLabel: "Reset code",
-    newPassword: "New password",
-    resetPasswordBtn: "Reset password",
-    resettingPassword: "Resetting…",
-    backToSignIn: "← Back to sign in",
-    backToSignUp: "← Back to sign up",
-    resetCodeSent: "We sent a 6-digit code to {{email}}",
     noAccount: "Don't have an account?",
     alreadyAccount: "Already have an account?",
     signUpFree: "Sign up free",
@@ -78,7 +64,7 @@ export default {
     heroSub: "Trades, beauty & wellness, or professional services — quotes, appointments, invoices and payments, all in one place.",
     feature1: "{{bookingPlural}} clients book themselves",
     feature2: "Invoice and get paid",
-    feature3: "vimen Pay — 2% flat",
+    feature3: "Vinem Pay — 2% flat",
     feature4: "Built for {{vertical}}",
     feature5: "Automatic review requests"
   },
@@ -89,7 +75,7 @@ export default {
     clients: "Clients",
     invoices: "Invoices",
     booking: "Booking",
-    payments: "vimen Pay",
+    payments: "Vinem Pay",
     marketplace: "Marketplace",
     reviews: "Reviews",
     referrals: "Referrals",
@@ -490,9 +476,9 @@ export default {
     saveAvailability: "Save availability"
   },
   payments: {
-    title: "vimen Pay 💳",
+    title: "Vinem Pay 💳",
     overview: {
-      activeBanner: "✓ vimen Pay active",
+      activeBanner: "✓ Vinem Pay active",
       connected: "Connected",
       recentPayments: "Recent payments",
       noPayments: "No payments yet",
@@ -528,8 +514,8 @@ export default {
       feeRows: {
         stripeProcessing: "Stripe processing",
         stripeProcessingNote: "Standard UK rate",
-        vimenPay: "vimen Pay",
-        vimenPayNote: "Platform fee",
+        VinemPay: "Vinem Pay",
+        VinemPayNote: "Platform fee",
         total: "Total",
         totalNote: "On a €500 invoice = €17"
       },
@@ -552,9 +538,9 @@ export default {
     feeTitle: "Fee breakdown — example €550 invoice",
     invoiceAmount: "Invoice amount",
     stripeFee: "Stripe fee (1.4%+20p)",
-    vimenFee: "vimen Pay (2%)",
+    VinemFee: "Vinem Pay (2%)",
     youReceive: "You receive",
-    connected: "✓ vimen Pay active",
+    connected: "✓ Vinem Pay active",
     autoPayouts: "🏦 Automatic payouts",
     autoPayoutsSub: "Earnings are automatically paid out every 2 business days to your connected bank account.",
     noPayouts: "No payouts yet",
@@ -584,7 +570,7 @@ export default {
       title: "Fee breakdown — example €550 invoice",
       invoiceAmount: "Invoice amount",
       stripeFee: "Stripe fee (1.4%+20p)",
-      vimenPayFee: "vimen Pay (2%)",
+      VinemPayFee: "Vinem Pay (2%)",
       youReceive: "You receive"
     },
     status: {
@@ -616,7 +602,10 @@ export default {
       holderLabel: "Titulaire du compte",
       holderPlaceholder: "ex. Jean Dupont"
     },
-    holdToCopyId: "Hold to copy ID"
+    holdToCopyId: "Hold to copy ID",
+    comingSoonTitle: "Coming soon",
+    comingSoonMsg: "Card payments are coming soon. In the meantime, use the bank details to get paid by transfer.",
+    comingSoonBtn: "Coming soon"
   },
   marketplace: {
     title: "Marketplace",
@@ -908,7 +897,7 @@ export default {
     referSomeoneBtn: "Refer someone",
     modal: {
       title: "Refer a tradesperson",
-      intro: "Know another electrician, plumber, or builder who'd benefit from vimen? When they sign up and complete their first job, you both get 2 months Pro free.",
+      intro: "Know another electrician, plumber, or builder who'd benefit from Vinem? When they sign up and complete their first job, you both get 2 months Pro free.",
       theirNameLabel: "Their name (optional)",
       theirEmailLabel: "Their email *",
       giftNote: "They'll get a personal invite from you with your referral link. When they activate their account, you both get 2 months Pro free.",
@@ -950,7 +939,7 @@ export default {
     reward: "+{{months}}mo Pro",
     sending: "Sending…",
     sendCta: "Send referral invite",
-    linkSub: "Share this with any tradesperson you know. When they complete their first job on vimen, you both get {{months}} months Pro free.",
+    linkSub: "Share this with any tradesperson you know. When they complete their first job on Vinem, you both get {{months}} months Pro free.",
     status: {
       pending: "Pending",
       signed_up: "Signed up",
@@ -965,7 +954,7 @@ export default {
       },
       linkCard: {
         title: "Your referral link",
-        bodyPrefix: "Share this with any tradesperson you know. When they complete their first job on vimen, you both get ",
+        bodyPrefix: "Share this with any tradesperson you know. When they complete their first job on Vinem, you both get ",
         boldPhrase: "2 months Pro free",
         bodySuffix: ".",
         shareLinkBtn: "Share link",
@@ -983,7 +972,7 @@ export default {
         },
         step3: {
           title: "They complete a job",
-          desc: "After their first job on vimen, the referral qualifies."
+          desc: "After their first job on Vinem, the referral qualifies."
         },
         step4: {
           title: "You both get 2 months Pro free",
@@ -1009,7 +998,7 @@ export default {
         failedToSend: "Failed to send referral",
         sentTitle: "✓ Referral sent!",
         sentMessage: "Invite sent to {{email}}",
-        shareMessage: "I've been using vimen to run my trade business — dead simple for quoting, invoicing and getting paid. Sign up free: {{url}}"
+        shareMessage: "I've been using Vinem to run my trade business — dead simple for quoting, invoicing and getting paid. Sign up free: {{url}}"
       }
     },
     savedOpeningMail: "Saved! Opening your mail app to complete delivery..."
@@ -1176,7 +1165,7 @@ export default {
         desc: "Create quotes, get client sign-off"
       },
       payments: {
-        label: "vimen Pay",
+        label: "Vinem Pay",
         desc: "Payments, transactions, payouts"
       },
       marketplace: {
@@ -1208,7 +1197,7 @@ export default {
     }
   },
   actions: {
-    loading: "Loading...",
-    save: "Saved"
+    loading: "Chargement...",
+    save: "Enregistrer"
   }
 };
