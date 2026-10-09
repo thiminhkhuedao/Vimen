@@ -122,6 +122,17 @@ export default function InvoicesScreen() {
     else Alert.alert(t("invoices.emailFailedTitle"), result.error);
   }
 
+  // Stripe n'est pas encore entièrement activé (Connect pas configuré sur le
+  // compte Stripe) — on affiche "bientôt disponible" plutôt que de laisser
+  // l'utilisateur tomber sur une erreur à chaque tentative. handleStripeLink
+  // reste définie, juste débranchée du bouton, facile à reconnecter plus tard.
+  function showComingSoon() {
+    Alert.alert(
+      t("payments.comingSoonTitle") || "Bientôt disponible",
+      t("payments.comingSoonMsg") || "Les liens de paiement par carte arrivent bientôt. En attendant, utilise les coordonnées bancaires pour être payé par virement."
+    );
+  }
+
   async function handleStripeLink(inv) {
     setBusy(true);
     try {
@@ -272,8 +283,8 @@ export default function InvoicesScreen() {
               {detailInv.stripe_payment_link_url ? (
                 <Btn size="sm" variant="ghost" onPress={() => Linking.openURL(detailInv.stripe_payment_link_url)} style={{ flex: 1 }}>💳 {t("invoices.paymentLinkShort")}</Btn>
               ) : detailInv.status === "unpaid" && (
-                <Btn size="sm" variant="ghost" onPress={() => handleStripeLink(detailInv)} disabled={busy} style={{ flex: 1 }}>
-                  💳 {busy ? (t("invoices.creating") || "Creating...") : (t("invoices.createPaymentLink") || "Payment link")}
+                <Btn size="sm" variant="ghost" onPress={showComingSoon} style={{ flex: 1 }}>
+                  💳 {t("payments.comingSoonBtn") || "Bientôt disponible"}
                 </Btn>
               )}
               <Btn size="sm" variant="ghost" onPress={() => handleCopyBankDetails(detailInv)} style={{ flex: 1 }}>
