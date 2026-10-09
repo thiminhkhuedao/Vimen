@@ -42,28 +42,14 @@ export default {
   auth: {
     welcomeBack: "Bon retour",
     createAccount: "Créer un compte",
-    signInSub: "Connectez-vous à votre compte vimen",
+    signInSub: "Connectez-vous à votre compte Vinem",
     signUpSub: "Démarrez gratuitement — sans carte bancaire",
     email: "Adresse e-mail",
     password: "Mot de passe",
     passwordMin: "8 caractères minimum",
     fullName: "Nom complet",
-    username: "Nom d'utilisateur",
     profession: "Votre profession",
     forgotPassword: "Mot de passe oublié ?",
-    continueWithGoogle: "Continuer avec Google",
-    orDivider: "ou",
-    forgotPasswordTitle: "Réinitialise ton mot de passe",
-    forgotPasswordSub: "Entre ton email, on t'enverra un code de réinitialisation.",
-    sendResetCode: "Envoyer le code",
-    sendingResetCode: "Envoi…",
-    resetCodeLabel: "Code de réinitialisation",
-    newPassword: "Nouveau mot de passe",
-    resetPasswordBtn: "Réinitialiser le mot de passe",
-    resettingPassword: "Réinitialisation…",
-    backToSignIn: "← Retour à la connexion",
-    backToSignUp: "← Retour à l'inscription",
-    resetCodeSent: "Nous avons envoyé un code à 6 chiffres à {{email}}",
     noAccount: "Pas encore de compte ?",
     alreadyAccount: "Déjà inscrit ?",
     signUpFree: "S'inscrire gratuitement",
@@ -78,7 +64,7 @@ export default {
     heroSub: "Artisans, beauté & bien-être ou professions libérales — devis, rendez-vous, factures et paiements, tout en un seul endroit.",
     feature1: "Les clients réservent leurs {{bookingPlural}} eux-mêmes",
     feature2: "Facturez et encaissez",
-    feature3: "vimen Pay — 2% fixe",
+    feature3: "Vinem Pay — 2% fixe",
     feature4: "Conçu pour {{vertical}}",
     feature5: "Demandes d'avis automatiques"
   },
@@ -89,7 +75,7 @@ export default {
     clients: "Clients",
     invoices: "Factures",
     booking: "Réservations",
-    payments: "vimen Pay",
+    payments: "Vinem Pay",
     marketplace: "Marketplace",
     reviews: "Avis",
     referrals: "Parrainage",
@@ -504,9 +490,9 @@ export default {
     unavailable: "Indisponible"
   },
   payments: {
-    title: "vimen Pay 💳",
+    title: "Vinem Pay 💳",
     overview: {
-      activeBanner: "✓ vimen Pay actif",
+      activeBanner: "✓ Vinem Pay actif",
       connected: "Connecté",
       recentPayments: "Paiements récents",
       noPayments: "Aucun paiement pour le moment",
@@ -542,8 +528,8 @@ export default {
       feeRows: {
         stripeProcessing: "Traitement Stripe",
         stripeProcessingNote: "Taux standard UK",
-        vimenPay: "vimen Pay",
-        vimenPayNote: "Commission plateforme",
+        VinemPay: "Vinem Pay",
+        VinemPayNote: "Commission plateforme",
         total: "Total",
         totalNote: "Sur une facture de 500 € = 17 €"
       },
@@ -566,9 +552,9 @@ export default {
     feeTitle: "Détail des frais — exemple 550 €",
     invoiceAmount: "Montant de la facture",
     stripeFee: "Frais Stripe (1,4 %+0,25 €)",
-    vimenFee: "vimen Pay (2 %)",
+    VinemFee: "Vinem Pay (2 %)",
     youReceive: "Vous recevez",
-    connected: "✓ vimen Pay actif",
+    connected: "✓ Vinem Pay actif",
     autoPayouts: "🏦 Virements automatiques",
     autoPayoutsSub: "Vos gains sont virés automatiquement tous les 2 jours ouvrés sur votre compte bancaire.",
     noPayouts: "Aucun virement pour l'instant",
@@ -598,7 +584,7 @@ export default {
       title: "Détail des frais — exemple facture de 550 €",
       invoiceAmount: "Montant de la facture",
       stripeFee: "Frais Stripe (1,4%+20p)",
-      vimenPayFee: "vimen Pay (2%)",
+      VinemPayFee: "Vinem Pay (2%)",
       youReceive: "Vous recevez"
     },
     status: {
@@ -630,7 +616,10 @@ export default {
       syncFailedWhat: "Impossible de synchroniser le compte",
       syncFailedWhy: "Le service de paiement est temporairement indisponible"
     },
-    holdToCopyId: "Rester appuyé pour copier l'ID"
+    holdToCopyId: "Rester appuyé pour copier l'ID",
+    comingSoonTitle: "Bientôt disponible",
+    comingSoonMsg: "Les paiements par carte arrivent bientôt. En attendant, utilise les coordonnées bancaires pour être payé par virement.",
+    comingSoonBtn: "Bientôt disponible"
   },
   marketplace: {
     title: "Marketplace",
@@ -922,7 +911,7 @@ export default {
     referSomeoneBtn: "Parrainer quelqu'un",
     modal: {
       title: "Parrainer un artisan",
-      intro: "Vous connaissez un électricien, un plombier ou un maçon à qui vimen pourrait plaire ? Quand il s'inscrit et termine son premier chantier, vous gagnez tous les deux 2 mois de Pro offerts.",
+      intro: "Vous connaissez un électricien, un plombier ou un maçon à qui Vinem pourrait plaire ? Quand il s'inscrit et termine son premier chantier, vous gagnez tous les deux 2 mois de Pro offerts.",
       theirNameLabel: "Son nom (facultatif)",
       theirEmailLabel: "Son email *",
       giftNote: "Il recevra une invitation personnelle avec votre lien de parrainage. Quand il active son compte, vous gagnez tous les deux 2 mois de Pro offerts.",
@@ -964,7 +953,7 @@ export default {
     reward: "+{{months}} mois Pro",
     sending: "Envoi…",
     sendCta: "Envoyer l'invitation",
-    linkSub: "Partagez ce lien avec n'importe quel artisan. Quand il termine sa première mission sur vimen, vous recevez tous les deux {{months}} mois Pro offerts.",
+    linkSub: "Partagez ce lien avec n'importe quel artisan. Quand il termine sa première mission sur Vinem, vous recevez tous les deux {{months}} mois Pro offerts.",
     status: {
       pending: "En attente",
       signed_up: "Inscrit",
@@ -979,7 +968,7 @@ export default {
       },
       linkCard: {
         title: "Your referral link",
-        bodyPrefix: "Partagez ceci avec tout artisan que vous connaissez. Quand il termine son premier chantier sur vimen, vous obtenez tous les deux ",
+        bodyPrefix: "Partagez ceci avec tout artisan que vous connaissez. Quand il termine son premier chantier sur Vinem, vous obtenez tous les deux ",
         boldPhrase: "2 mois de Pro offerts",
         bodySuffix: ".",
         shareLinkBtn: "Partager le lien",
@@ -997,7 +986,7 @@ export default {
         },
         step3: {
           title: "Il termine un chantier",
-          desc: "Après son premier chantier sur vimen, le parrainage est validé."
+          desc: "Après son premier chantier sur Vinem, le parrainage est validé."
         },
         step4: {
           title: "Vous obtenez tous les deux 2 mois de Pro offerts",
@@ -1023,7 +1012,7 @@ export default {
         failedToSend: "Échec de l'envoi du parrainage",
         sentTitle: "✓ Parrainage envoyé !",
         sentMessage: "Invitation envoyée à {{email}}",
-        shareMessage: "J'utilise vimen pour gérer mon activité — hyper simple pour les devis, les factures et les paiements. Inscris-toi gratuitement : {{url}}"
+        shareMessage: "J'utilise Vinem pour gérer mon activité — hyper simple pour les devis, les factures et les paiements. Inscris-toi gratuitement : {{url}}"
       }
     },
     savedOpeningMail: "Enregistré ! Ouverture de ton app mail pour finaliser l'envoi..."
@@ -1194,7 +1183,7 @@ export default {
         desc: "Créez des devis, faites-les valider par le client"
       },
       payments: {
-        label: "vimen Pay",
+        label: "Vinem Pay",
         desc: "Paiements, transactions, versements"
       },
       marketplace: {
