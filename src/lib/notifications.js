@@ -5,8 +5,21 @@ import { supabase } from "./supabase";
 const invoke = async (fn, body) => {
   const { data, error } = await supabase.functions.invoke(fn, { body });
   if (error || data?.error) {
-    const msg = error?.message ?? data?.error;
-    console.error(`[notifications] ${fn}:`, msg);
+    let msg = error?.message ?? data?.error;
+
+
+    let status;
+    try {
+      status = error?.context?.status;
+      const text = await error?.context?.text?.();
+      if (text) {
+        try { msg = JSON.parse(text)?.error ?? JSON.parse(text)?.message ?? text; }
+        catch { msg = text; }
+      }
+    } catch {
+    }
+
+    console.error(`[notifications] ${fn} (HTTP ${status ?? "?"}):`, msg);
     return { success: false, error: msg };
   }
   return { success: true, ...data };
@@ -33,10 +46,7 @@ export const sendInvoiceEmail = (invoice, profile) =>
   });
 
 // process.env.EXPO_PUBLIC_APP_URL doit pointer vers le domaine web
-// (vimen.app) — c'est là que vit la page publique /quote/:token,
-// il n'existe pas d'équivalent mobile à cette page, le client la
-// consulte toujours dans son navigateur, même si le devis a été créé
-// depuis l'app mobile du pro.
+
 export const sendQuoteEmail = (quote, client, profile) => {
   if (!client?.email) {
     return Promise.resolve({ success: false, error: "Client has no email address" });
@@ -101,12 +111,7 @@ export const sendJobReminderSMS = (job, client, profile) => {
   });
 };
 
-// Version qui marche vraiment (contrairement à ReviewsPage.jsx côté web,
-// qui appelle encore "send-review-request" — une Edge Function qui n'a
-// jamais existé, échoue silencieusement à chaque fois, et retombe sur un
-// mailto/presse-papier manuel). Celle-ci utilise "send-sms" avec
-// type: "review_request", la même Edge Function déjà déployée et
-// fonctionnelle que job_reminder/invoice_paid ci-dessus.
+
 export async function sendReviewRequestSMS(client, job, profile) {
   if (!client?.phone) {
     return { success: false, error: "Client has no phone number" };
