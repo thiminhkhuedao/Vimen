@@ -7,7 +7,11 @@ const invoke = async (fn, body) => {
   if (error || data?.error) {
     let msg = error?.message ?? data?.error;
 
-
+    // Le message générique "Edge Function returned a non-2xx status code"
+    // cache la vraie réponse du serveur. error.context contient la Response
+    // HTTP brute : on en extrait le code (401 = token rejeté avant même
+    // d'exécuter la fonction, 404 = fonction introuvable, 500 = la fonction
+    // a planté) et le corps du message pour savoir quoi corriger.
     let status;
     try {
       status = error?.context?.status;
@@ -17,6 +21,7 @@ const invoke = async (fn, body) => {
         catch { msg = text; }
       }
     } catch {
+      // pas de réponse exploitable — on garde le message générique
     }
 
     console.error(`[notifications] ${fn} (HTTP ${status ?? "?"}):`, msg);
@@ -25,28 +30,19 @@ const invoke = async (fn, body) => {
   return { success: true, ...data };
 };
 
-export const sendInvoiceEmail = (invoice, profile) =>
-  invoke("send-invoice-email", {
-    to:            invoice.client?.email,
-    clientName:    invoice.client?.name,
-    tradeName:     profile.name,
-    tradeEmail:    profile.email,
-    tradePhone:    profile.phone,
-    invoiceNumber: invoice.invoice_number,
-    amount:        invoice.amount,
-    dueDate:       invoice.due_date
-      ? new Date(invoice.due_date).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" })
-      : null,
-    jobTitle:      invoice.job?.title ?? null,
-    paymentUrl:    invoice.stripe_payment_link_url ?? null,
-    bankName:      profile.bank_name,
-    sortCode:      profile.sort_code,
-    accountNumber: profile.account_number,
-    invoiceNotes:  profile.invoice_notes,
-  });
+// La Edge Function send-invoice-email ne fait plus confiance aux données
+// envoyées par le client : elle reçoit uniquement l'ID de la facture et
+// va relire facture, client et profil elle-même en base (avec le token
+// Clerk de l'utilisateur, donc limité à ses propres données). Même
+// format d'appel que côté web.
+export const sendInvoiceEmail = (invoice, _profile, reminder = false) =>
+  invoke("send-invoice-email", { invoiceId: invoice.id, reminder });
 
 // process.env.EXPO_PUBLIC_APP_URL doit pointer vers le domaine web
-
+// (vimen.app) — c'est là que vit la page publique /quote/:token,
+// il n'existe pas d'équivalent mobile à cette page, le client la
+// consulte toujours dans son navigateur, même si le devis a été créé
+// depuis l'app mobile du pro.
 export const sendQuoteEmail = (quote, client, profile) => {
   if (!client?.email) {
     return Promise.resolve({ success: false, error: "Client has no email address" });
@@ -111,7 +107,12 @@ export const sendJobReminderSMS = (job, client, profile) => {
   });
 };
 
-
+// Version qui marche vraiment (contrairement à ReviewsPage.jsx côté web,
+// qui appelle encore "send-review-request" — une Edge Function qui n'a
+// jamais existé, échoue silencieusement à chaque fois, et retombe sur un
+// mailto/presse-papier manuel). Celle-ci utilise "send-sms" avec
+// type: "review_request", la même Edge Function déjà déployée et
+// fonctionnelle que job_reminder/invoice_paid ci-dessus.
 export async function sendReviewRequestSMS(client, job, profile) {
   if (!client?.phone) {
     return { success: false, error: "Client has no phone number" };
