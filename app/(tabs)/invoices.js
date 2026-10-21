@@ -10,7 +10,7 @@ import { useProfile } from "../../src/hooks/useProfile";
 import { getInvoices, getClients, getJobs, createInvoice, markInvoicePaid, deleteInvoice } from "../../src/lib/db";
 import { createPaymentLink } from "../../src/lib/stripe";
 import * as Clipboard from "expo-clipboard";
-import { sendInvoiceEmail, sendInvoicePaidSMS } from "../../src/lib/notifications";
+import { sendInvoiceEmail } from "../../src/lib/notifications";
 import { withTimeout } from "../../src/lib/withTimeout";
 import { useTranslation } from "../../src/hooks/i18n/index.js";
 import { Card, Btn, Badge, EmptyState, Spinner, Sheet, Field, Input, SelectPicker } from "../../src/components/UI";
@@ -108,11 +108,6 @@ export default function InvoicesScreen() {
     setInvoices(prev => prev.map(i => i.id === id ? data : i));
     setDetailInv(null);
 
-    // SMS notification
-    const inv = invoices.find(i => i.id === id);
-    if (inv && profile?.notif_sms_paid && profile?.phone) {
-      sendInvoicePaidSMS(inv, profile);
-    }
   }
 
   async function handleSendEmail(inv) {
