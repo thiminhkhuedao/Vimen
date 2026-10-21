@@ -7,7 +7,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfile } from "../../src/hooks/useProfile";
 import { getJobs, getClients, createJob, updateJob, completeJob, deleteJob, createInvoice } from "../../src/lib/db";
-import { sendJobReminderSMS, sendInvoiceEmail } from "../../src/lib/notifications";
+import { sendInvoiceEmail } from "../../src/lib/notifications";
 import { supabase } from "../../src/lib/supabase";
 import { withTimeout } from "../../src/lib/withTimeout";
 import { useTranslation } from "../../src/hooks/i18n/index.js";
@@ -123,10 +123,6 @@ export default function JobsScreen() {
 
         const job = jobs.find(j => j.id === id);
         const client = clients.find(c => c.id === (job?.client_id ?? job?.client?.id));
-        if (client?.phone && profile?.phone) {
-          sendJobReminderSMS(job, client, profile);
-        }
-
         // Job terminé → facture créée et envoyée automatiquement, sauf s'il
         // en existe déjà une pour ce job (évite les doublons).
         await autoCreateAndSendInvoice(data ?? job, client);
