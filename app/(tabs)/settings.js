@@ -7,6 +7,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
+import { useProfile } from "../../src/hooks/useProfile";
 import { supabase } from "../../src/lib/supabase";
 import { updateProfile } from "../../src/lib/db";
 import { Card, Btn, Avatar, Field, Input, SelectPicker, Divider } from "../../src/components/UI";
@@ -48,7 +49,6 @@ export default function SettingsScreen() {
       invoice_notes:   profile.invoice_notes    ?? "",
       booking_slug:    profile.booking_slug     ?? "",
       notif_email_booking:    profile.notif_email_booking    ?? true,
-      notif_sms_paid:         profile.notif_sms_paid         ?? false,
       notif_weekly_digest:    profile.notif_weekly_digest    ?? true,
       notif_overdue_reminder: profile.notif_overdue_reminder ?? true,
       extra_fields:    profile.extra_fields     ?? {},
@@ -83,9 +83,8 @@ export default function SettingsScreen() {
 
   const NOTIF_ROWS = [
     ["notif_email_booking",    t("settings.notifs.emailBooking"),    t("settings.notifs.viaResend")],
-    ["notif_sms_paid",         t("settings.notifs.smsPaid"),         t("settings.notifs.viaTwilio")],
     ["notif_weekly_digest",    t("settings.notifs.weeklyDigest"),    t("settings.notifs.viaResend")],
-    ["notif_overdue_reminder", t("settings.notifs.overdueReminder"), t("settings.notifs.viaTwilio")],
+    ["notif_overdue_reminder", t("settings.notifs.overdueReminder"), t("settings.notifs.viaResend")],
   ];
 
   return (
