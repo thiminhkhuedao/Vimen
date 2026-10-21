@@ -107,7 +107,7 @@ export default function DashboardScreen() {
           <View>
             <Text style={{ fontSize:26, fontWeight:"900", color:T.text, letterSpacing:-0.8 }}>{t("dashboard.greeting", { name: firstName })}</Text>
             <Text style={{ fontSize:13, color:T.muted, marginTop:4 }}>
-              {vertical.icon} {profile?.trade || "—"} · {profile?.plan==="pro" ? t("dashboard.planPro") : t("dashboard.planFree")}
+              {vertical.icon} {profile?.trade || "—"}
             </Text>
           </View>
           <TouchableOpacity onPress={() => router.push("/(tabs)/settings")}>
