@@ -58,7 +58,7 @@ export default function MoreScreen() {
             </View>
             <View>
               <Text style={{ fontSize:15, fontWeight:"700" }}>{profile.name}</Text>
-              <Text style={{ fontSize:13, color:T.muted }}>{getProfessionLabel(profile.trade, t)} · {profile.plan==="pro"?t("more.plan.pro"):t("more.plan.free")}</Text>
+              <Text style={{ fontSize:13, color:T.muted }}>{getProfessionLabel(profile.trade, t)}</Text>
             </View>
           </View>
         )}
