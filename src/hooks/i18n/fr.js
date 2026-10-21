@@ -732,9 +732,9 @@ export default {
     requestFirst: "Demandez votre premier avis",
     connectGoogle: "🔍 Connecter Google Business",
     connectSub: "Permettez aux clients d'accéder directement à votre profil Google",
-    sendRequest: "Envoyer la demande par SMS",
+    sendRequest: "Demander un avis",
     requestTitle: "Demander un avis",
-    requestSub: "Sélectionnez une mission terminée. Nous enverrons un SMS au client avec un lien direct vers votre page Google.",
+    requestSub: "Choisis un chantier terminé, puis partage un message prêt à envoyer avec un lien direct vers ta page d'avis Google.",
     addTitle: "Ajouter un avis",
     clientName: "Nom du client",
     rating: "Note",
@@ -745,13 +745,10 @@ export default {
     pushGoogle: "🔍 Inviter le client à poster sur Google",
     requestModal: {
       title: "Demander un avis",
-      intro: "Sélectionnez un chantier terminé. Nous enverrons un SMS au client lui demandant de laisser un avis — avec un lien direct vers votre profil Google.",
+      intro: "Choisis un chantier terminé, puis partage un message prêt à envoyer pour demander un avis à ton client, avec un lien direct vers ta page Google.",
       completedJobLabel: "Chantier terminé",
       selectJobPlaceholder: "Sélectionner un chantier…",
-      smsPreviewTitle: "Aperçu du SMS",
-      smsTemplate: "\"Bonjour {{clientName}}, j'espère que vous êtes satisfait(e) de {{jobTitle}}. Pourriez-vous prendre 60 secondes pour nous laisser un avis Google ? Ça nous aide beaucoup. Cliquez ici : {{urlPreview}}… — {{profileName}}\"",
-      cancel: "Cancel",
-      sendSmsBtn: "Envoyer le SMS"
+      cancel: "Cancel"
     },
     manualModal: {
       title: "Ajouter un avis manuellement",
@@ -766,7 +763,7 @@ export default {
     },
     toast: {
       selectCompletedJob: "Sélectionnez un chantier terminé",
-      requestSent: "SMS de demande d'avis envoyé à {{name}} ✓",
+      requestSent: "Demande d'avis partagée à {{name}} ✓",
       nameRatingRequired: "Nom et note requis",
       reviewAdded: "Avis ajouté ✓",
       markedPushedToGoogle: "Marqué comme publié sur Google"
@@ -801,7 +798,7 @@ export default {
       },
       requestFirstBtn: "Demander un premier avis",
       requestSheet: {
-        intro: "Sélectionnez un chantier terminé. Nous enverrons un SMS au client avec un lien direct vers votre page d'avis Google."
+        intro: "Choisis un chantier terminé, vérifie ton lien d'avis Google, puis partage un message prêt à envoyer à ton client."
       },
       addSheet: {
         title: "Ajouter un avis",
@@ -812,7 +809,7 @@ export default {
       },
       alerts: {
         requestSentTitle: "✓ Demande d'avis envoyée",
-        requestSentMessage: "SMS envoyé à {{name}}",
+        requestSentMessage: "Demande partagée à {{name}}",
         clientNameRequired: "Le nom du client est requis"
       }
     },
@@ -820,7 +817,11 @@ export default {
     noClientPhone: "Ce client n'a pas de numéro de téléphone.",
     requestFailedTitle: "Impossible d'envoyer la demande",
     saving: "Enregistrement...",
-    sending: "Envoi..."
+    sending: "Envoi...",
+    shareMessage: "Bonjour {{clientName}}, merci d'avoir fait appel à {{tradeName}} ! Auriez-vous un instant pour nous laisser un avis ? {{url}}",
+    noGoogleLink: "Ajoute d'abord ton lien d'avis Google (il doit commencer par https://).",
+    googleLinkLabel: "Lien d'avis Google",
+    shareRequestBtn: "Partager la demande d'avis"
   },
   certifications: {
     title: "Certifications",
@@ -1083,7 +1084,7 @@ export default {
             "0": "Unlimited clients",
             "1": "Unlimited invoices",
             "2": "Custom booking URL",
-            "3": "SMS reminders",
+            "3": "Rappels automatiques",
             "4": "Stripe payments",
             "5": "Priority support"
           }
@@ -1112,12 +1113,9 @@ export default {
     savePayment: "Enregistrer les paramètres de paiement",
     notifEmail: "E-mail à chaque nouvelle demande de réservation",
     notifEmailSub: "via Resend",
-    notifSms: "SMS quand une facture est payée",
-    notifSmsSub: "via Twilio",
     notifDigest: "Résumé hebdomadaire des revenus",
     notifDigestSub: "via Resend",
-    notifOverdue: "Rappel SMS pour factures en retard",
-    notifOverdueSub: "via Twilio",
+    notifOverdue: "Rappels de factures en retard",
     savePreferences: "Enregistrer les préférences",
     currentPlan: "Abonnement actuel",
     upgrade: "Passer à Pro →",
@@ -1140,11 +1138,9 @@ export default {
     notifs: {
       title: "Notifications",
       emailBooking: "E-mail à chaque nouvelle demande de réservation",
-      smsPaid: "SMS quand une facture est payée",
       weeklyDigest: "E-mail hebdomadaire des revenus",
-      overdueReminder: "SMS de rappel pour facture en retard",
+      overdueReminder: "Rappels de factures en retard",
       viaResend: "via Resend",
-      viaTwilio: "via Twilio",
       save: "Enregistrer les préférences"
     },
     terms: {
