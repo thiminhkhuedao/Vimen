@@ -1,11 +1,10 @@
 // app/(screens)/reviews.js
 import { useState, useEffect, useCallback } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl, Linking } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl, Linking , Share } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "../../src/hooks/i18n/index.js";
 import { useProfile } from "../../src/hooks/useProfile";
-import { getReviews, getJobs, getClients, createReview } from "../../src/lib/db";
-import { sendReviewRequestSMS } from "../../src/lib/notifications";
+import { getReviews, getJobs, getClients, createReview, updateProfile } from "../../src/lib/db";
 import { Card, Btn, Badge, EmptyState, Spinner, Sheet, Field, Input } from "../../src/components/UI";
 import { T, SS, fmtDate } from "../../src/styles/tokens";
 
@@ -22,7 +21,7 @@ function Stars({ rating, size=16 }) {
 export default function ReviewsScreen() {
   const { t }        = useTranslation();
   const insets      = useSafeAreaInsets();
-  const { profile } = useProfile();
+  const { profile, refresh } = useProfile();
   const [reviews,  setReviews]  = useState([]);
   const [jobs,     setJobs]     = useState([]);
   const [clients,  setClients]  = useState([]);
@@ -32,7 +31,7 @@ export default function ReviewsScreen() {
   const [addSheet, setAddSheet] = useState(false);
   const [selJob,   setSelJob]   = useState("");
   const [form,     setForm]     = useState({ client_name:"", rating:5, title:"", body:"" });
-  const [sending, setSending] = useState(false);
+  const [googleUrl, setGoogleUrl] = useState("");
   const [savingManual, setSavingManual] = useState(false);
 
   const load = useCallback(async (refresh=false) => {
@@ -52,21 +51,38 @@ export default function ReviewsScreen() {
   const avgRating = reviews.length>0 ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : "—";
   const verified  = reviews.filter(r=>r.verified).length;
 
+  useEffect(() => { setGoogleUrl(profile?.google_review_url ?? ""); }, [profile?.google_review_url]);
+
+  // On prépare le message et on ouvre le menu de partage du téléphone
+  // (Messages, WhatsApp, email...) : le pro envoie lui-même depuis son
+  // propre téléphone, sans service tiers ni coût.
   async function sendRequest() {
     const job = jobs.find(j=>j.id===selJob);
     if (!job) { Alert.alert(t("reviews.toast.selectCompletedJob")); return; }
     const cl = clients.find(c=>c.id===(job.client_id??job.client?.id));
-    if (!cl?.phone) { Alert.alert(t("reviews.noClientPhone") || "This client has no phone number."); return; }
 
-    setSending(true);
-    const result = await sendReviewRequestSMS(cl, job, profile);
-    setSending(false);
+    const url = googleUrl.trim();
+    if (!/^https:\/\//i.test(url)) {
+      Alert.alert(t("reviews.noGoogleLink") || "Add your Google review link first (it must start with https://).");
+      return;
+    }
 
-    if (result.success) {
-      Alert.alert(t("reviews.screen.alerts.requestSentTitle"), t("reviews.screen.alerts.requestSentMessage", { name: cl?.name ?? t("reviews.fallback.client") }));
-      setReqSheet(false);
-    } else {
-      Alert.alert(t("reviews.requestFailedTitle") || "Could not send request", result.error);
+    // Mémorise le lien dans le profil s'il a changé, pour ne pas le redemander.
+    if (url !== (profile?.google_review_url ?? "")) {
+      const { error } = await updateProfile(profile.clerk_id, { google_review_url: url });
+      if (!error && refresh) refresh();
+    }
+
+    const message = t("reviews.shareMessage", {
+      clientName: cl?.name ?? "",
+      tradeName: profile?.name ?? "",
+      url,
+    });
+    try {
+      const result = await Share.share({ message });
+      if (result.action === Share.sharedAction) setReqSheet(false);
+    } catch {
+      Alert.alert(t("reviews.requestFailedTitle") || "Could not open the share menu");
     }
   }
 
@@ -212,8 +228,11 @@ export default function ReviewsScreen() {
             </ScrollView>
           </View>
         </Field>
-        <Btn onPress={sendRequest} disabled={sending} style={{ marginTop:8 }}>
-          {sending ? (t("reviews.sending") || "Sending...") : t("reviews.requestModal.sendSmsBtn")}
+        <Field label={t("reviews.googleLinkLabel") || "Google review link"}>
+          <Input value={googleUrl} onChangeText={setGoogleUrl} placeholder="https://g.page/r/..." autoCapitalize="none" autoCorrect={false} keyboardType="url" />
+        </Field>
+        <Btn onPress={sendRequest} style={{ marginTop:8 }}>
+          {t("reviews.shareRequestBtn")}
         </Btn>
       </Sheet>
 
