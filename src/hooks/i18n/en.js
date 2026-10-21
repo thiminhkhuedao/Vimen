@@ -718,9 +718,9 @@ export default {
     requestFirst: "Request your first review",
     connectGoogle: "🔍 Connect Google Business",
     connectSub: "Let clients go straight to your Google profile",
-    sendRequest: "Send SMS request",
+    sendRequest: "Request a review",
     requestTitle: "Request a review",
-    requestSub: "Select a completed job. We'll send an SMS to the client with a one-tap link to your Google review page.",
+    requestSub: "Pick a completed job, then share a ready-to-send message with a one-tap link to your Google review page.",
     addTitle: "Add review",
     clientName: "Client name",
     rating: "Rating",
@@ -731,13 +731,10 @@ export default {
     pushGoogle: "🔍 Ask client to post to Google",
     requestModal: {
       title: "Request a review",
-      intro: "Select a completed job. We'll send an SMS to the client asking them to leave a review — with a one-tap link directly to your Google profile.",
+      intro: "Pick a completed job, then share a ready-to-send message asking your client for a review, with a one-tap link to your Google page.",
       completedJobLabel: "Completed job",
       selectJobPlaceholder: "Select a job…",
-      smsPreviewTitle: "SMS preview",
-      smsTemplate: "\"Hi {{clientName}}, hope you're happy with the {{jobTitle}}. Could you spare 60 seconds to leave us a Google review? It really helps. Tap here: {{urlPreview}}… — {{profileName}}\"",
-      cancel: "Cancel",
-      sendSmsBtn: "Send SMS request"
+      cancel: "Cancel"
     },
     manualModal: {
       title: "Add review manually",
@@ -752,7 +749,7 @@ export default {
     },
     toast: {
       selectCompletedJob: "Select a completed job",
-      requestSent: "Review request SMS sent to {{name}} ✓",
+      requestSent: "Review request shared with {{name}} ✓",
       nameRatingRequired: "Name and rating required",
       reviewAdded: "Review added ✓",
       markedPushedToGoogle: "Marked as pushed to Google"
@@ -787,7 +784,7 @@ export default {
       },
       requestFirstBtn: "Request first review",
       requestSheet: {
-        intro: "Select a completed job. We'll send an SMS to the client with a one-tap link to your Google review page."
+        intro: "Pick a completed job, check your Google review link, then share a ready-to-send message with your client."
       },
       addSheet: {
         title: "Add review",
@@ -798,7 +795,7 @@ export default {
       },
       alerts: {
         requestSentTitle: "✓ Review request sent",
-        requestSentMessage: "SMS sent to {{name}}",
+        requestSentMessage: "Request shared with {{name}}",
         clientNameRequired: "Client name required"
       }
     },
@@ -806,7 +803,11 @@ export default {
     requestFailedTitle: "Could not send request",
     addFailedTitle: "Could not add this review. Try again.",
     sending: "Sending...",
-    saving: "Saving..."
+    saving: "Saving...",
+    shareMessage: "Hi {{clientName}}, thanks for choosing {{tradeName}}! Would you mind leaving us a quick review? {{url}}",
+    noGoogleLink: "Add your Google review link first (it must start with https://).",
+    googleLinkLabel: "Google review link",
+    shareRequestBtn: "Share review request"
   },
   certifications: {
     title: "Certifications",
@@ -1069,7 +1070,7 @@ export default {
             "0": "Unlimited clients",
             "1": "Unlimited invoices",
             "2": "Custom booking URL",
-            "3": "SMS reminders",
+            "3": "Automatic reminders",
             "4": "Stripe payments",
             "5": "Priority support"
           }
@@ -1098,12 +1099,9 @@ export default {
     savePayment: "Save payment settings",
     notifEmail: "Email on new booking request",
     notifEmailSub: "via Resend",
-    notifSms: "SMS when invoice is paid",
-    notifSmsSub: "via Twilio",
     notifDigest: "Weekly earnings email",
     notifDigestSub: "via Resend",
-    notifOverdue: "Overdue invoice SMS reminder",
-    notifOverdueSub: "via Twilio",
+    notifOverdue: "Overdue invoice reminders",
     savePreferences: "Save preferences",
     currentPlan: "Current plan",
     upgrade: "Upgrade to Pro →",
@@ -1126,11 +1124,9 @@ export default {
     notifs: {
       title: "Notifications",
       emailBooking: "Email on new booking request",
-      smsPaid: "SMS when invoice is paid",
       weeklyDigest: "Weekly earnings email",
-      overdueReminder: "Overdue invoice SMS reminder",
+      overdueReminder: "Overdue invoice reminders",
       viaResend: "via Resend",
-      viaTwilio: "via Twilio",
       save: "Save preferences"
     },
     terms: {
