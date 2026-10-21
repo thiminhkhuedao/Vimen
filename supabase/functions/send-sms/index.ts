@@ -1,114 +1,250 @@
-
+/**
+ * Supabase Edge Function: send-sms
+ *
+ * Envoie des SMS via Twilio, à partir de modèles fixes.
+ *
+ * SÉCURITÉ : l'ancienne version envoyait n'importe quel SMS à n'importe quel
+ * numéro pour quiconque appelait la fonction (et chaque SMS est facturé par
+ * Twilio). Cette version :
+ *   - exige un token valide (utilisateur connecté, ou appel interne avec la
+ *     clé service_role, par exemple depuis stripe-webhook) ;
+ *   - n'envoie qu'à deux catégories de destinataires :
+ *       · le téléphone du professionnel lui-même (invoice_paid, new_booking,
+ *         overdue_invoice) — jamais le numéro fourni par l'appelant ;
+ *       · un client de CE professionnel, vérifié en base (job_reminder,
+ *         review_request) ;
+ *   - impose le nom du pro et le lien d'avis Google depuis son profil en
+ *     base (impossible d'injecter un lien de phishing) ;
+ *   - tronque les champs libres et limite à 30 SMS par jour et par pro.
+ *
+ * Si Twilio n'est pas configuré, répond 503 avec un message clair au lieu
+ * d'une erreur 500 obscure.
+ *
+ * Autonome : aucun import depuis ../_shared.
+ *
+ * Deploy:
+ *   supabase functions deploy send-sms --project-ref <ID>
+ *
+ * Secrets (tous les trois requis pour envoyer réellement) :
+ *   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
+ */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const CORS = {
-  "Access-Control-Allow-Origin":  "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Content-Type": "application/json",
-};
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const TWILIO_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
+const TWILIO_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
+const TWILIO_FROM = Deno.env.get("TWILIO_FROM_NUMBER") ?? "";
 
-async function sendSMS(to: string, body: string): Promise<{ sid: string }> {
-  const SID       = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
-  const TOKEN     = Deno.env.get("TWILIO_AUTH_TOKEN")  ?? "";
-  const FROM      = Deno.env.get("TWILIO_FROM_NUMBER") ?? "";
-  const url       = `https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`;
-  const creds     = btoa(`${SID}:${TOKEN}`);
+const MAX_BODY_BYTES = 4 * 1024;
+const DAILY_LIMIT = 30;
 
-  const res = await fetch(url, {
-    method:  "POST",
-    headers: {
-      Authorization:  `Basic ${creds}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({ To: to, From: FROM, Body: body }),
-  });
+const CLIENT_TYPES = new Set(["job_reminder", "review_request"]);
+const OWNER_TYPES = new Set(["invoice_paid", "new_booking", "overdue_invoice"]);
 
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.message ?? "Twilio error");
-  return { sid: json.sid };
+// ── CORS ─────────────────────────────────────────────────────────────
+const ALLOWED_ORIGINS = ["https://vimen.app", "https://www.vimen.app", "http://localhost:5173"];
+
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") ?? "";
+  const allowed = ALLOWED_ORIGINS.includes(origin) || /^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(origin);
+  return {
+    "Access-Control-Allow-Origin": allowed ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+async function readJsonWithLimit(req: Request, maxBytes: number): Promise<{ data: unknown; error: string | null }> {
+  if (!req.body) return { data: null, error: "empty_body" };
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      reader.cancel();
+      return { data: null, error: "payload_too_large" };
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  try {
+    return { data: JSON.parse(new TextDecoder().decode(bytes)), error: null };
+  } catch {
+    return { data: null, error: "invalid_json" };
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────
+// Nettoie un champ libre : une seule ligne, longueur bornée.
+function clip(value: unknown, max = 80): string {
+  if (typeof value === "number") return String(value);
+  if (typeof value !== "string") return "";
+  return value.replace(/[\r\n]+/g, " ").trim().slice(0, max);
+}
+
+const PHONE_RE = /^\+?[0-9 ()-]{6,20}$/;
+
+interface ProfileRow {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  google_review_url: string | null;
+}
+
+function buildMessage(type: string, d: Record<string, unknown>, profile: ProfileRow): string | null {
+  const trade = clip(profile.name, 60) || "Vimen";
+  switch (type) {
+    case "job_reminder":
+      return `Hi ${clip(d.clientName, 40)}, this is a reminder from ${trade} about your appointment: ` +
+        `${clip(d.jobTitle)} on ${clip(d.date)} at ${clip(d.time, 10)}. Reply STOP to opt out.`;
+    case "review_request": {
+      const url = profile.google_review_url?.trim() ?? "";
+      if (!/^https:\/\//i.test(url)) return null; // le lien vient du profil, jamais de l'appelant
+      return `Hi ${clip(d.clientName, 40)}, thanks for choosing ${trade}! ` +
+        `Would you mind leaving us a quick review? ${url} Reply STOP to opt out.`;
+    }
+    case "invoice_paid":
+      return `💶 Payment received! Invoice ${clip(d.invoiceNumber, 30)} from ` +
+        `${clip(d.clientName, 40)} — ${clip(d.amount, 20)} has been paid.`;
+    case "new_booking":
+      return `📅 New booking request from ${clip(d.customerName, 40)} for ${clip(d.date)}. ` +
+        `Open Vimen to accept or decline.`;
+    case "overdue_invoice":
+      return `⚠️ Invoice ${clip(d.invoiceNumber, 30)} for ${clip(d.clientName, 40)} ` +
+        `(${clip(d.amount, 20)}) is overdue.`;
+    default:
+      return null;
+  }
+}
+
+// ── Handler ──────────────────────────────────────────────────────────
+Deno.serve(async (req: Request) => {
+  const cors = corsHeaders(req);
+  if (req.method === "OPTIONS") return new Response(null, { headers: cors });
+
+  const json = (body: Record<string, unknown>, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+
+  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
   try {
-    const { type, to, profileId, data } = await req.json();
+    // 1. Authentification obligatoire.
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    if (!token) return json({ error: "Non authentifié" }, 401);
+    const isInternal = token === SERVICE_ROLE_KEY;
 
-    // Resolve the actual recipient number. If the caller passed
-    // `profileId` instead of `to`, look it up ourselves — see the
-    // note above on why (anon callers must never be trusted with
-    // another user's phone number directly).
-    let recipient = to;
-    if (!recipient && profileId) {
-      const supabaseAdmin = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      );
-      const { data: profile, error: profileErr } = await supabaseAdmin
-        .from("profiles")
-        .select("phone")
-        .eq("id", profileId)
-        .single();
+    // 2. Body borné et validé.
+    const { data: raw, error: bodyError } = await readJsonWithLimit(req, MAX_BODY_BYTES);
+    if (bodyError) return json({ error: bodyError }, bodyError === "payload_too_large" ? 413 : 400);
+    const body = (raw ?? {}) as { type?: unknown; to?: unknown; profileId?: unknown; data?: unknown };
 
-      if (profileErr) throw new Error(profileErr.message);
-      if (!profile?.phone) {
-        // Not an error — this professional just hasn't added a phone
-        // number yet, so there's simply no SMS to send.
-        return new Response(JSON.stringify({ success: true, skipped: "no_phone_on_file" }), { headers: CORS });
+    const type = typeof body.type === "string" ? body.type : "";
+    if (!CLIENT_TYPES.has(type) && !OWNER_TYPES.has(type)) {
+      return json({ error: `Type de SMS inconnu : ${type || "(vide)"}` }, 400);
+    }
+    const data: Record<string, unknown> =
+      body.data && typeof body.data === "object" ? (body.data as Record<string, unknown>) : {};
+
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+    // 3. Quel professionnel ? (identité tirée du token, jamais du body —
+    // sauf appel interne, qui a le droit de préciser profileId.)
+    let profile: ProfileRow | null = null;
+    let db = admin;
+
+    if (isInternal) {
+      if (typeof body.profileId !== "string") return json({ error: "profileId requis" }, 400);
+      const { data: p } = await admin
+        .from("profiles").select("id,name,phone,google_review_url").eq("id", body.profileId).single();
+      profile = (p as ProfileRow | null) ?? null;
+    } else {
+      db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+        auth: { persistSession: false },
+      });
+      const { data: pid, error: pidError } = await db.rpc("my_profile_id");
+      if (pidError || !pid) return json({ error: "Non authentifié" }, 401);
+      const { data: p } = await db
+        .from("profiles").select("id,name,phone,google_review_url").eq("id", pid as string).single();
+      profile = (p as ProfileRow | null) ?? null;
+    }
+    if (!profile) return json({ error: "Profil introuvable" }, 404);
+
+    // 4. Twilio configuré ? Sinon message clair plutôt qu'un 500 obscur.
+    if (!TWILIO_SID || !TWILIO_TOKEN || !TWILIO_FROM) {
+      return json({ error: "SMS non configurés (secrets Twilio manquants sur ce projet)" }, 503);
+    }
+
+    // 5. Destinataire.
+    let recipient: string;
+    if (OWNER_TYPES.has(type)) {
+      const own = profile.phone?.trim() ?? "";
+      if (!own) return json({ success: true, skipped: "no_phone_on_file" }, 200);
+      recipient = own;
+    } else {
+      const to = typeof body.to === "string" ? body.to.trim() : "";
+      if (!PHONE_RE.test(to)) return json({ error: "Numéro de destinataire invalide" }, 400);
+      if (!isInternal) {
+        const { data: found } = await db
+          .from("clients").select("id").eq("profile_id", profile.id).eq("phone", to).limit(1);
+        if (!found || found.length === 0) {
+          return json({ error: "Ce numéro ne correspond à aucun de tes clients" }, 403);
+        }
       }
-      recipient = profile.phone;
+      recipient = to;
     }
 
-    if (!recipient) throw new Error("Either `to` or `profileId` is required");
-
-    let message = "";
-
-    switch (type) {
-      case "job_reminder":
-        // to = client phone
-        message =
-          `Hi ${data.clientName}, just a reminder that ${data.tradeName} will be with you tomorrow ` +
-          `(${data.date}) at ${data.time} for: ${data.jobTitle}. ` +
-          `Questions? Reply to this message. Reply STOP to opt out.`;
-        break;
-
-      case "invoice_paid":
-        // to = tradesperson phone
-        message =
-          `💷 Vimen: Invoice ${data.invoiceNumber} for €${data.amount} ` +
-          `has been paid by ${data.clientName}. Nice one!`;
-        break;
-
-      case "new_booking":
-        // to = tradesperson phone
-        message =
-          `🔔 Vimen: New booking request from ${data.customerName}` +
-          `${data.preferredDate ? ` for ${data.preferredDate}` : ""}. ` +
-          `Log in to accept or decline.`;
-        break;
-
-      case "overdue_invoice":
-        // to = tradesperson phone
-        message =
-          `⚠️ Vimen: Invoice ${data.invoiceNumber} (€${data.amount}) ` +
-          `for ${data.clientName} is now overdue. Consider following up.`;
-        break;
-
-      case "review_request":
-        // to = client phone
-        message =
-          `Hi ${data.clientName}, hope you're happy with ${data.jobTitle}. ` +
-          `Could you spare 60 seconds to leave us a Google review? It really helps: ${data.googleUrl} — ${data.tradeName}`;
-        break;
-
-      default:
-        throw new Error(`Unknown SMS type: ${type}`);
+    // 6. Plafond quotidien par professionnel (les SMS coûtent de l'argent).
+    const bucket = `sms:${profile.id}`;
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count } = await admin
+      .from("rate_limit_events")
+      .select("*", { count: "exact", head: true })
+      .eq("bucket_key", bucket)
+      .gte("created_at", since);
+    if ((count ?? 0) >= DAILY_LIMIT) {
+      return json({ error: "Limite quotidienne de SMS atteinte, réessaie demain" }, 429);
     }
 
-    const result = await sendSMS(recipient, message);
-    return new Response(JSON.stringify({ success: true, sid: result.sid }), { headers: CORS });
+    // 7. Message (modèle fixe) et envoi.
+    const message = buildMessage(type, data, profile);
+    if (!message) {
+      return json({ error: "Aucun lien d'avis Google configuré dans ton profil" }, 400);
+    }
+
+    const creds = btoa(`${TWILIO_SID}:${TWILIO_TOKEN}`);
+    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
+      method: "POST",
+      headers: { Authorization: `Basic ${creds}`, "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ To: recipient, From: TWILIO_FROM, Body: message }).toString(),
+    });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const detail = (result as { message?: string }).message ?? `Twilio ${res.status}`;
+      console.error("send-sms: Twilio error:", detail);
+      return json({ error: `Envoi impossible : ${detail}` }, 502);
+    }
+
+    await admin.from("rate_limit_events").insert({ bucket_key: bucket, action: `sms_${type}` });
+    return json({ success: true, sid: (result as { sid?: string }).sid ?? null }, 200);
   } catch (err) {
-    console.error("send-sms error:", err.message);
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: CORS });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("send-sms error:", message);
+    return json({ error: message }, 500);
   }
 });

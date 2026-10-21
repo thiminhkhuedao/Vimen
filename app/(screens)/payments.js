@@ -1,10 +1,5 @@
 // app/(screens)/payments.js
-//
-// Parité avec PaymentsPage.jsx (web) : détection réelle de la connexion
-// Stripe (au lieu de toujours afficher "connecté"), bouton "Connecter
-// Stripe" quand ce n'est pas le cas, gestion d'erreur structurée avec
-// retry, bouton de synchronisation, formulaire de coordonnées bancaires
-// (IBAN/BIC) comme alternative à Stripe, copie d'ID de transaction.
+
 
 import { useState, useEffect, useCallback } from "react";
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Linking, TextInput, Alert } from "react-native";
@@ -103,6 +98,17 @@ export default function PaymentsScreen() {
   useEffect(() => { load(); }, [load]);
 
   const isConnected = Boolean(profile?.stripe_customer_id || profile?.stripe_account_id);
+
+  // Stripe Connect n'est pas encore activé sur le compte Stripe : on affiche
+  // "bientôt disponible" plutôt que de laisser l'utilisateur tomber sur une
+  // vraie erreur Stripe. handleConnect/handleSync restent définies, juste
+  // débranchées des boutons, faciles à reconnecter une fois Connect activé.
+  function showComingSoon() {
+    Alert.alert(
+      t("payments.comingSoonTitle") || "Bientôt disponible",
+      t("payments.comingSoonMsg") || "Les paiements par carte arrivent bientôt."
+    );
+  }
 
   async function handleConnect() {
     setIsLoading(true);

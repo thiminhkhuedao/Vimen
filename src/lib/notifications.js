@@ -38,33 +38,16 @@ const invoke = async (fn, body) => {
 export const sendInvoiceEmail = (invoice, _profile, reminder = false) =>
   invoke("send-invoice-email", { invoiceId: invoice.id, reminder });
 
-// process.env.EXPO_PUBLIC_APP_URL doit pointer vers le domaine web
-// (vimen.app) — c'est là que vit la page publique /quote/:token,
-// il n'existe pas d'équivalent mobile à cette page, le client la
-// consulte toujours dans son navigateur, même si le devis a été créé
-// depuis l'app mobile du pro.
-export const sendQuoteEmail = (quote, client, profile) => {
+// La Edge Function send-quote-email ne reçoit plus que l'ID du devis : elle
+// relit devis, client et profil en base avec le token de l'utilisateur,
+// construit elle-même le lien public (secret APP_URL côté serveur) et
+// n'envoie qu'à l'email du client enregistré. Plus besoin de
+// EXPO_PUBLIC_APP_URL pour ça côté mobile.
+export const sendQuoteEmail = (quote, client, _profile) => {
   if (!client?.email) {
     return Promise.resolve({ success: false, error: "Client has no email address" });
   }
-  if (!quote?.public_token) {
-    return Promise.resolve({ success: false, error: "Quote is missing its public link — try refreshing" });
-  }
-  const quoteUrl = `${process.env.EXPO_PUBLIC_APP_URL}/quote/${quote.public_token}`;
-  return invoke("send-quote-email", {
-    to:           client.email,
-    clientName:   client.name,
-    tradeName:    profile.name,
-    tradeEmail:   profile.email,
-    tradePhone:   profile.phone,
-    quoteNumber:  quote.quote_number,
-    total:        quote.total,
-    validUntil:   quote.valid_until
-      ? new Date(quote.valid_until).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
-      : null,
-    quoteUrl,
-    currencyCode: profile.currency ?? "EUR",
-  });
+  return invoke("send-quote-email", { quoteId: quote.id });
 };
 
 export const sendNewBookingSMS = (booking, profile) =>
