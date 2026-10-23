@@ -222,18 +222,6 @@ Deno.serve(async (req) => {
           .update({ status: "paid", paid_at: new Date().toISOString() })
           .eq("id", invoiceId);
 
-        await supabase.functions.invoke("send-sms", {
-          body: {
-            type: "invoice_paid",
-            profileId,
-            data: {
-              invoiceNumber: invoice?.invoice_number ?? invoiceId,
-              amount:        grossAmount,
-              clientName:    invoice?.client?.name ?? "your client",
-            },
-          },
-        });
-
         console.log(`✓ Payment recorded: £${grossAmount} (Stripe fee: £${stripeFee}, net: £${netAmount})`);
         break;
       }

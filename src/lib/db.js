@@ -9,8 +9,10 @@ const handle = async (query) => {
 };
 
 // ── PROFILES ─────────────────────────────────────────
+// Lecture via la vue « profiles_decrypted » : mêmes colonnes que profiles, mais les coordonnées
+// bancaires (chiffrées dans la table) sont déchiffrées pour la personne connectée.
 export const getProfile = (userId) =>
-  handle(supabase.from("profiles").select("*").eq("clerk_id", userId).single());
+  handle(supabase.from("profiles_decrypted").select("*").eq("clerk_id", userId).single());
 
 export const createProfile = async (userId, { name, email, trade = "" }) => {
   const slug = name.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9]/g, "") +
@@ -25,7 +27,7 @@ export const createProfile = async (userId, { name, email, trade = "" }) => {
   // planter, on récupère simplement le profil qui existe déjà.
   if (error?.code === "23505") {
     return handle(
-      supabase.from("profiles").select("*").eq("clerk_id", userId).single()
+      supabase.from("profiles_decrypted").select("*").eq("clerk_id", userId).single()
     );
   }
 
@@ -33,8 +35,16 @@ export const createProfile = async (userId, { name, email, trade = "" }) => {
   return { data, error };
 };
 
-export const updateProfile = (userId, updates) =>
-  handle(supabase.from("profiles").update(updates).eq("clerk_id", userId).select().single());
+export const updateProfile = async (userId, updates) => {
+  // 1) Écriture dans la table (les coordonnées bancaires sont chiffrées par la base)
+  const { error } = await supabase.from("profiles").update(updates).eq("clerk_id", userId);
+  if (error) {
+    console.error("[db]", error.message);
+    return { data: null, error };
+  }
+  // 2) Relecture via la vue pour renvoyer le profil avec les valeurs déchiffrées
+  return handle(supabase.from("profiles_decrypted").select("*").eq("clerk_id", userId).single());
+};
 
 // Même Edge Function que le web (stripe-connect) — backend partagé, pas
 // besoin de la redéployer, juste de l'appeler depuis le mobile aussi.

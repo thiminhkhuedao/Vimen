@@ -12,6 +12,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyToken } from "https://esm.sh/@clerk/backend@1";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -35,21 +36,27 @@ async function getVerifiedClerkId(req: Request): Promise<string> {
 }
 
 Deno.serve(async (req: Request) => {
+  const preflight = handleCors(req);
+  if (preflight) return preflight;
+  const CORS = { ...corsHeaders(req), "Content-Type": "application/json" };
+
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "method_not_allowed" }), { status: 405 });
+    return new Response(JSON.stringify({ error: "method_not_allowed" }), { status: 405, headers: CORS });
   }
 
   try {
     const clerkId = await getVerifiedClerkId(req);
 
+    // Vue « profiles_decrypted » : mêmes colonnes que profiles, coordonnées bancaires déchiffrées.
+    // L'export est un droit d'accès RGPD : la personne doit récupérer ses données lisibles.
     const { data: profile, error: profileErr } = await supabase
-      .from("profiles")
+      .from("profiles_decrypted")
       .select("*")
       .eq("clerk_id", clerkId)
       .single();
 
     if (profileErr || !profile) {
-      return new Response(JSON.stringify({ error: "profil introuvable" }), { status: 404 });
+      return new Response(JSON.stringify({ error: "profil introuvable" }), { status: 404, headers: CORS });
     }
 
     const pid = profile.id;
@@ -94,6 +101,7 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify(exportPayload, null, 2), {
       status: 200,
       headers: {
+        ...corsHeaders(req),
         "Content-Type": "application/json",
         "Content-Disposition": `attachment; filename="vimen-export-${pid}.json"`,
       },
@@ -101,6 +109,6 @@ Deno.serve(async (req: Request) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(message);
-    return new Response(JSON.stringify({ error: message }), { status: 500 });
+    return new Response(JSON.stringify({ error: message }), { status: 500, headers: CORS });
   }
 });
