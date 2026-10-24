@@ -1,10 +1,12 @@
 // src/components/UI.js
 // Every shared component used across all screens.
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
   Modal, StyleSheet, ActivityIndicator, Switch,
+  Keyboard, Platform, useWindowDimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { T, SS, initials } from "../styles/tokens";
 import { useTranslation } from "../hooks/i18n/index.js";
 
@@ -186,7 +188,43 @@ export function Divider({ style }) {
 }
 
 /* ── BottomSheet Modal ───────────────────────────────── */
+// Hauteur du clavier (0 quand il est fermé). Sert à empêcher les fenêtres
+// à formulaire d'être recouvertes par le clavier.
+function useKeyboardHeight() {
+  const [height, setHeight] = useState(0);
+  useEffect(() => {
+    const ios = Platform.OS === "ios";
+    const show = Keyboard.addListener(ios ? "keyboardWillShow" : "keyboardDidShow", e => setHeight(e.endCoordinates?.height ?? 0));
+    const hide = Keyboard.addListener(ios ? "keyboardWillHide" : "keyboardDidHide", () => setHeight(0));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
+  return height;
+}
+
 export function Sheet({ visible, onClose, title, children, height = "75%" }) {
+  const kb = useKeyboardHeight();
+  const { height: winH } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const keyboardOpen = kb > 0;
+  const topGap = insets.top + 8;
+
+  // CORRECTIF clavier : avant, la fenêtre restait collée en bas de l'écran
+  // et le clavier la recouvrait, on ne voyait plus le champ qu'on remplissait.
+  //  - iPhone : quand le clavier s'ouvre, la fenêtre s'agrandit jusqu'en haut
+  //    et son ScrollView (automaticallyAdjustKeyboardInsets) fait défiler
+  //    le champ actif au-dessus du clavier.
+  //  - Android : la fenêtre remonte de la hauteur du clavier.
+  let place;
+  if (Platform.OS === "ios") {
+    place = keyboardOpen
+      ? { bottom: 0, height: winH - topGap, paddingBottom: 8 }
+      : { bottom: 0, maxHeight: height, paddingBottom: 32 };
+  } else {
+    place = keyboardOpen
+      ? { bottom: kb, maxHeight: winH - kb - topGap, paddingBottom: 8 }
+      : { bottom: 0, maxHeight: height, paddingBottom: 32 };
+  }
+
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <TouchableOpacity
@@ -196,13 +234,12 @@ export function Sheet({ visible, onClose, title, children, height = "75%" }) {
       />
       <View style={{
         position: "absolute",
-        bottom: 0, left: 0, right: 0,
+        left: 0, right: 0,
         backgroundColor: T.surface,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        maxHeight: height,
         minHeight: 200,
-        paddingBottom: 32,
+        ...place,
       }}>
         {/* Handle */}
         <View style={{ alignItems: "center", paddingTop: 12, paddingBottom: 4 }}>
@@ -216,7 +253,12 @@ export function Sheet({ visible, onClose, title, children, height = "75%" }) {
             </TouchableOpacity>
           </View>
         )}
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16 }}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16 }}
+        >
           {children}
         </ScrollView>
       </View>
