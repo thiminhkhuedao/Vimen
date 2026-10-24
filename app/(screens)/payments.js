@@ -1,5 +1,10 @@
 // app/(screens)/payments.js
-
+//
+// Parité avec PaymentsPage.jsx (web) : détection réelle de la connexion
+// Stripe (au lieu de toujours afficher "connecté"), bouton "Connecter
+// Stripe" quand ce n'est pas le cas, gestion d'erreur structurée avec
+// retry, bouton de synchronisation, formulaire de coordonnées bancaires
+// (IBAN/BIC) comme alternative à Stripe, copie d'ID de transaction.
 
 import { useState, useEffect, useCallback } from "react";
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Linking, TextInput, Alert } from "react-native";
@@ -194,7 +199,7 @@ export default function PaymentsScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding:16, paddingBottom:insets.bottom+90 }}
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding:16, paddingBottom:insets.bottom+90 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={()=>load(true)} tintColor={T.brand}/>}>
 
         {pageError && <StructuredError {...pageError} onRetry={handleSync} />}
