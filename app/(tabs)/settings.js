@@ -108,7 +108,7 @@ export default function SettingsScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }}>
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }}>
 
         {/* ── ACCOUNT ── */}
         {tab === "account" && (
