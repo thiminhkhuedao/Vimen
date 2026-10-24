@@ -247,7 +247,7 @@ export default function BookingScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding:16, paddingBottom:insets.bottom+90 }}
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding:16, paddingBottom:insets.bottom+90 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={()=>load(true)} tintColor={T.brand}/>}>
 
         {/* REQUESTS */}
