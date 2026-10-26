@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#E8500A"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.vimen.mobile",
