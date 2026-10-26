@@ -33,6 +33,15 @@ function getSections(t) {
         { label:t("more.items.certifications.label"), icon:"🏅", desc:t("more.items.certifications.desc"), route:"/(screens)/certifications" },
       ],
     },
+    {
+      // Sans cette entrée, l'écran Réglages (masqué de la barre d'onglets)
+      // n'était accessible depuis nulle part dans l'app — y compris l'export
+      // et la suppression de compte.
+      title: t("more.sections.account"),
+      items: [
+        { label:t("more.items.settings.label"), icon:"⚙️", desc:t("more.items.settings.desc"), route:"/(tabs)/settings" },
+      ],
+    },
   ];
 }
 
