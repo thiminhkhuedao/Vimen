@@ -1,26 +1,22 @@
 // app/(auth)/sign-up.js
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ScrollView, Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useSignUp, useOAuth } from "@clerk/clerk-expo";
+import { useSignUp } from "@clerk/clerk-expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { T } from "../../src/styles/tokens";
+import { useTranslation } from "../../src/hooks/i18n/index.js";
 import { checkRateLimit } from "../../src/lib/security";
 import Turnstile from "../../src/components/Turnstile";
-import { useTranslation } from "../../src/hooks/i18n/index.js";
-import { useWarmUpBrowser } from "../../src/hooks/useWarmUpBrowser";
 
 export default function SignUpScreen() {
-  useWarmUpBrowser();
-
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { t } = useTranslation();
   const { signUp, setActive, isLoaded } = useSignUp();
-  const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
 
   const [step, setStep]       = useState("form"); // "form" | "verify"
   const [name, setName]       = useState("");
@@ -29,7 +25,6 @@ export default function SignUpScreen() {
   const [pass, setPass]       = useState("");
   const [code, setCode]       = useState("");
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError]     = useState("");
   const [captchaToken, setCaptchaToken] = useState(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -37,8 +32,8 @@ export default function SignUpScreen() {
   async function submit() {
     if (!isLoaded) return;
     setError("");
-    if (!agreedToTerms) { setError("Please accept the Privacy Policy and Terms of Service to continue."); return; }
-    if (!captchaToken) { setError("Please complete the verification challenge."); return; }
+    if (!agreedToTerms) { setError(t("auth.errors.acceptTerms")); return; }
+    if (!captchaToken) { setError(t("auth.errors.completeCaptcha")); return; }
     const rateLimitMsg = await checkRateLimit("signup", { identifier: email.trim(), turnstileToken: captchaToken });
     if (rateLimitMsg) { setError(rateLimitMsg); return; }
     setLoading(true);
@@ -60,25 +55,10 @@ export default function SignUpScreen() {
       setStep("verify");
     } catch (err) {
       console.error(err);
-      Alert.alert("Sign up failed", err.errors?.[0]?.longMessage || err.message);
+      Alert.alert(t("auth.errors.signUpFailed"), err.errors?.[0]?.longMessage || err.message);
     }
     setLoading(false);
   }
-
-  const onGooglePress = useCallback(async () => {
-    setGoogleLoading(true);
-    try {
-      const { createdSessionId, setActive: oauthSetActive } = await startOAuthFlow();
-      if (createdSessionId && oauthSetActive) {
-        await oauthSetActive({ session: createdSessionId });
-        router.replace("/(tabs)");
-      }
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Google sign up failed", err.errors?.[0]?.longMessage || err.message || "Please try again.");
-    }
-    setGoogleLoading(false);
-  }, [startOAuthFlow, router]);
 
   async function verify() {
     if (!isLoaded) return;
@@ -93,13 +73,13 @@ export default function SignUpScreen() {
         router.replace("/(tabs)");
       } else if (result.status === "missing_requirements") {
         setError(
-          `Almost there — still missing: ${result.missingFields?.join(", ") || "some required fields"}.`
+          t("auth.errors.missingRequirements", { fields: result.missingFields?.join(", ") || t("auth.errors.someFields") })
         );
       } else {
-        setError(`Unexpected status: ${result.status}`);
+        setError(t("auth.errors.unexpectedStatus", { status: result.status }));
       }
     } catch (err) {
-      setError(err?.errors?.[0]?.longMessage || err?.message || "Invalid code");
+      setError(err?.errors?.[0]?.longMessage || err?.message || t("auth.errors.invalidCode"));
     }
     setLoading(false);
   }
@@ -111,7 +91,7 @@ export default function SignUpScreen() {
           <Text style={{ fontSize: 32, textAlign: "center", marginBottom: 16 }}>📬</Text>
           <Text style={{ fontSize: 20, fontWeight: "800", textAlign: "center", marginBottom: 8 }}>{t("auth.verifyEmail")}</Text>
           <Text style={{ fontSize: 14, color: T.muted, textAlign: "center", marginBottom: 28, lineHeight: 20 }}>
-            {t("auth.verifyCode", { email })}
+            {t("auth.verifyIntro", { email })}
           </Text>
 
           <TextInput
@@ -140,7 +120,7 @@ export default function SignUpScreen() {
             }}
           >
             <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>
-              {loading ? t("auth.verifying") : `${t("auth.verifyEmail2")} →`}
+              {loading ? t("auth.verifying") : t("auth.verifyEmail2") + " →"}
             </Text>
           </TouchableOpacity>
 
@@ -158,34 +138,6 @@ export default function SignUpScreen() {
         <Text style={{ fontSize: 28, fontWeight: "900", color: T.brand, marginBottom: 6, letterSpacing: -0.5 }}>⚡ vimen</Text>
         <Text style={{ fontSize: 22, fontWeight: "800", color: T.text, marginBottom: 6 }}>{t("auth.createAccount")}</Text>
         <Text style={{ fontSize: 14, color: T.muted, marginBottom: 24 }}>{t("auth.signUpSub")}</Text>
-
-        <TouchableOpacity
-          onPress={onGooglePress}
-          disabled={googleLoading}
-          style={{
-            flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
-            borderWidth: 1, borderColor: T.borderMed ?? "#00000022", borderRadius: 10,
-            padding: 14, backgroundColor: T.surface, opacity: googleLoading ? 0.6 : 1, marginBottom: 20,
-          }}
-        >
-          <View style={{
-            width: 20, height: 20, borderRadius: 10, backgroundColor: "#fff",
-            alignItems: "center", justifyContent: "center",
-          }}>
-            <Text style={{ fontSize: 13, fontWeight: "800", color: "#4285F4" }}>G</Text>
-          </View>
-          <Text style={{ fontSize: 15, fontWeight: "600", color: T.text }}>
-            {googleLoading ? "…" : t("auth.continueWithGoogle")}
-          </Text>
-        </TouchableOpacity>
-
-        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: T.border }} />
-          <Text style={{ marginHorizontal: 12, fontSize: 12, color: T.muted, textTransform: "uppercase" }}>
-            {t("auth.orDivider")}
-          </Text>
-          <View style={{ flex: 1, height: 1, backgroundColor: T.border }} />
-        </View>
 
         <Field label={t("auth.fullName")}>
           <TextInput style={inputStyle} value={name} onChangeText={setName} placeholder="Jake Morrison" placeholderTextColor={T.hint} autoFocus/>
@@ -221,13 +173,13 @@ export default function SignUpScreen() {
               {agreedToTerms && <Text style={{ color: "#fff", fontSize: 13, fontWeight: "700" }}>✓</Text>}
             </View>
             <Text style={{ flex: 1, fontSize: 13, color: T.muted, lineHeight: 19 }}>
-              I agree to the{" "}
+              {t("auth.agreePrefix")}{" "}
               <Text style={{ color: T.brand, fontWeight: "600" }} onPress={() => router.push("/(screens)/privacy-policy")}>
-                Privacy Policy
+                {t("auth.privacyPolicy")}
               </Text>
-              {" "}and{" "}
+              {" "}{t("auth.agreeAnd")}{" "}
               <Text style={{ color: T.brand, fontWeight: "600" }} onPress={() => router.push("/(screens)/terms-of-service")}>
-                Terms of Service
+                {t("auth.termsOfService")}
               </Text>
             </Text>
           </TouchableOpacity>
@@ -246,14 +198,14 @@ export default function SignUpScreen() {
           }}
         >
           <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>
-            {loading ? t("auth.creatingAccount") : `${t("auth.createAccount")} →`}
+            {loading ? t("auth.creatingAccount") : t("auth.createAccount") + " →"}
           </Text>
         </TouchableOpacity>
 
         <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 24 }}>
           <Text style={{ fontSize: 14, color: T.muted }}>{t("auth.alreadyAccount")} </Text>
           <TouchableOpacity onPress={() => router.push("/(auth)/sign-in")}>
-            <Text style={{ fontSize: 14, color: T.brand, fontWeight: "700" }}>{t("common.signIn")}</Text>
+            <Text style={{ fontSize: 14, color: T.brand, fontWeight: "700" }}>{t("auth.signInLink")}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
