@@ -1,32 +1,30 @@
 // app/(auth)/sign-in.js
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ScrollView, Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useSignIn, useOAuth } from "@clerk/clerk-expo";
+import { useSignIn } from "@clerk/clerk-expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { T } from "../../src/styles/tokens";
 import { useTranslation } from "../../src/hooks/i18n/index.js";
-import { useWarmUpBrowser } from "../../src/hooks/useWarmUpBrowser";
+import { checkRateLimit } from "../../src/lib/security";
 
 export default function SignInScreen() {
-  useWarmUpBrowser();
-
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { t } = useTranslation();
   const { signIn, setActive, isLoaded } = useSignIn();
-  const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
 
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
 
   async function submit() {
     if (!isLoaded) return;
+    const rateLimitMsg = await checkRateLimit("login", { identifier: email.trim() });
+    if (rateLimitMsg) { Alert.alert(t("auth.errors.pleaseWaitTitle"), rateLimitMsg); return; }
     setLoading(true);
     try {
       const result = await signIn.create({
@@ -38,29 +36,14 @@ export default function SignInScreen() {
         await setActive({ session: result.createdSessionId });
         router.replace("/(tabs)");
       } else {
-        Alert.alert("Sign in incomplete", "Please try again or contact support.");
+        Alert.alert(t("auth.errors.signInIncompleteTitle"), t("auth.errors.signInIncompleteMsg"));
       }
     } catch (err) {
       console.error(err);
-      Alert.alert("Sign in failed", err.errors?.[0]?.longMessage || err.message);
+      Alert.alert(t("auth.errors.signInFailed"), err.errors?.[0]?.longMessage || err.message);
     }
     setLoading(false);
   }
-
-  const onGooglePress = useCallback(async () => {
-    setGoogleLoading(true);
-    try {
-      const { createdSessionId, setActive: oauthSetActive } = await startOAuthFlow();
-      if (createdSessionId && oauthSetActive) {
-        await oauthSetActive({ session: createdSessionId });
-        router.replace("/(tabs)");
-      }
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Google sign in failed", err.errors?.[0]?.longMessage || err.message || "Please try again.");
-    }
-    setGoogleLoading(false);
-  }, [startOAuthFlow, router]);
 
   return (
     <KeyboardAvoidingView
@@ -75,34 +58,6 @@ export default function SignInScreen() {
         <Text style={{ fontSize: 22, fontWeight: "800", color: T.text, marginBottom: 6 }}>{t("auth.welcomeBack")}</Text>
         <Text style={{ fontSize: 14, color: T.muted, marginBottom: 28 }}>{t("auth.signInSub")}</Text>
 
-        <TouchableOpacity
-          onPress={onGooglePress}
-          disabled={googleLoading}
-          style={{
-            flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
-            borderWidth: 1, borderColor: T.borderMed ?? "#00000022", borderRadius: 10,
-            padding: 14, backgroundColor: T.surface, opacity: googleLoading ? 0.6 : 1,
-          }}
-        >
-          <View style={{
-            width: 20, height: 20, borderRadius: 10, backgroundColor: "#fff",
-            alignItems: "center", justifyContent: "center",
-          }}>
-            <Text style={{ fontSize: 13, fontWeight: "800", color: "#4285F4" }}>G</Text>
-          </View>
-          <Text style={{ fontSize: 15, fontWeight: "600", color: T.text }}>
-            {googleLoading ? "…" : t("auth.continueWithGoogle")}
-          </Text>
-        </TouchableOpacity>
-
-        <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 20 }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: T.border }} />
-          <Text style={{ marginHorizontal: 12, fontSize: 12, color: T.muted, textTransform: "uppercase" }}>
-            {t("auth.orDivider")}
-          </Text>
-          <View style={{ flex: 1, height: 1, backgroundColor: T.border }} />
-        </View>
-
         <Text style={{ fontSize: 13, fontWeight: "500", color: T.muted, marginBottom: 6 }}>{t("auth.email")}</Text>
         <TextInput
           style={inputStyle}
@@ -115,12 +70,7 @@ export default function SignInScreen() {
           autoComplete="email"
         />
 
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 14, marginBottom: 6 }}>
-          <Text style={{ fontSize: 13, fontWeight: "500", color: T.muted }}>{t("auth.password")}</Text>
-          <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password")}>
-            <Text style={{ fontSize: 13, fontWeight: "600", color: T.brand }}>{t("auth.forgotPassword")}</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={{ fontSize: 13, fontWeight: "500", color: T.muted, marginTop: 14, marginBottom: 6 }}>{t("auth.password")}</Text>
         <TextInput
           style={inputStyle}
           value={pass}
@@ -140,7 +90,7 @@ export default function SignInScreen() {
           }}
         >
           <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>
-            {loading ? t("auth.signingIn") : `${t("common.signIn")} →`}
+            {loading ? t("auth.signingIn") : t("auth.signInBtn") + " →"}
           </Text>
         </TouchableOpacity>
 
