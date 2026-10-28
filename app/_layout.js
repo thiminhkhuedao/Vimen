@@ -1,29 +1,27 @@
-// app/_layout.js — Root layout with Clerk + a real navigation stack
+// app/_layout.js 
 import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
-import * as WebBrowser from "expo-web-browser";
 import * as Sentry from "@sentry/react-native";
 import { setClerkTokenGetter } from "../src/lib/supabase";
 import { useProfile } from "../src/hooks/useProfile";
 import { usePushNotifications } from "../src/hooks/usePushNotifications";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { configureStorage } from "../src/hooks/i18n/index.js";
 
-// Capture toutes les erreurs JS non gérées en prod, même logique que côté
-// web (voir src/main.jsx du repo web) — mais avec le SDK dédié React
-// Native, pas @sentry/react. Nécessite : npx expo install @sentry/react-native
+
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
   enabled: !__DEV__, // rien envoyé en dev local, seulement en vraie build
   tracesSampleRate: 0.1,
 });
 
-// Clerk's recommended token cache for Expo — stores the short-lived
-// session token in SecureStore. This stays small (unlike the full
-// Supabase session we had issues with), so no 2048-byte problem here.
+configureStorage(AsyncStorage);
+
 const tokenCache = {
   async getToken(key) {
     try {
@@ -41,11 +39,6 @@ const tokenCache = {
   },
 };
 
-// Requis pour que le flux OAuth (Google, etc.) referme correctement le
-// navigateur système après authentification et renvoie la main à l'app.
-// Doit être appelé une seule fois, au chargement du module.
-WebBrowser.maybeCompleteAuthSession();
-
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 if (!publishableKey) {
@@ -55,8 +48,6 @@ if (!publishableKey) {
 }
 
 function ClerkToSupabaseBridge() {
-  // Connects Clerk's getToken to the Supabase client, same pattern
-  // as the web app's App.jsx.
   const { getToken } = useAuth();
 
   useEffect(() => {
@@ -67,9 +58,6 @@ function ClerkToSupabaseBridge() {
 }
 
 function PushNotificationRegistrar() {
-  // Waits for the profile to resolve (useProfile already handles the
-  // signed-out / not-loaded states internally, returning profile:null),
-  // then registers this device for push once we have a real profile id.
   const { profile } = useProfile();
   usePushNotifications(profile?.id);
   return null;
