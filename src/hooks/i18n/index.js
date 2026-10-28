@@ -22,6 +22,12 @@ let _storage = (typeof localStorage !== "undefined")
 //   3. Fallback to "en"
 // On React Native, step 1 is skipped here (AsyncStorage is async, so it
 // can't be read synchronously at module load) — see configureStorage().
+// React Native n'a pas navigator.language : sur un téléphone, la langue par
+// défaut restait donc toujours "en". On lit la langue de l'appareil via Intl.
+function deviceLocale() {
+  try { return Intl.DateTimeFormat().resolvedOptions().locale || null; } catch { return null; }
+}
+
 function detectLanguage() {
   try {
     if (typeof localStorage !== "undefined") {
@@ -30,6 +36,7 @@ function detectLanguage() {
     }
     const locale = (
       (typeof navigator !== "undefined" && (navigator.language || navigator.languages?.[0])) ||
+      deviceLocale() ||
       FALLBACK
     );
     const lang = locale.split("-")[0].toLowerCase();
@@ -120,17 +127,11 @@ export function t(key, vars) {
 /**
  * Pluralization helper. Picks "<baseKey>_one" when count === 1 and
  * "<baseKey>_other" otherwise, and passes `count` through to
- * interpolation automatically — English and French both only need
- * these two forms, so this simple rule covers the translation files
- * as written (keys like quotes.stats.quotesCount_one / _other).
+ * interpolation automatically
  *
- * Prefer this over manually writing
- *   t(count === 1 ? "x.count_one" : "x.count_other", { count })
- * at every call site — same result, less to get wrong.
- *
- * @param {string} baseKey - key WITHOUT the _one/_other suffix
+ * @param {string} baseKey
  * @param {number} count
- * @param {object} [vars]  - extra interpolation vars besides count
+ * @param {object} [vars]  
  */
 export function tc(baseKey, count, vars) {
   const suffix = count === 1 ? "_one" : "_other";
@@ -145,8 +146,6 @@ function lookup(lang, key) {
 
 function interpolate(str, vars) {
   if (!vars || typeof str !== "string") return str;
-  // Matches {{varName}} first, then falls back to {varName} — the
-  // translation files use both styles interchangeably.
   return str.replace(/\{\{(\w+)\}\}|\{(\w+)\}/g, (match, k1, k2) => {
     const k = k1 ?? k2;
     return vars[k] !== undefined ? String(vars[k]) : match;
@@ -154,8 +153,6 @@ function interpolate(str, vars) {
 }
 
 // ── React hook (web — Vite) ───────────────────────────
-// Provides reactive re-render when language changes.
-// Import { useTranslation } from "../i18n" in any React component.
 
 import { useState, useEffect, useCallback } from "react";
 
