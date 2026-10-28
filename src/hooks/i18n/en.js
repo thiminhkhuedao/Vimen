@@ -1226,6 +1226,6 @@ export default {
   },
   actions: {
     loading: "Chargement...",
-    save: "Enregistrer"
+    save: "Save..."
   }
 };

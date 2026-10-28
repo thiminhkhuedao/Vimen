@@ -88,7 +88,11 @@ export default {
       rateLimitedIp: "Trop de tentatives. Réessaie plus tard.",
       rateLimitedIdentifier: "Trop de tentatives pour cet email. Réessaie plus tard.",
       generic: "Une erreur est survenue. Réessaie.",
-      serverError: "Une erreur est survenue. Réessaie dans un instant."
+      serverError: "Une erreur est survenue. Réessaie dans un instant.",
+      missingRequirements: "Presque terminé — il manque encore : {{fields}}.",
+      someFields: "certains champs obligatoires",
+      unexpectedStatus: "Statut inattendu : {{status}}",
+      invalidCode: "Code invalide"
     }
   },
   nav: {
