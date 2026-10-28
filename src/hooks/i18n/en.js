@@ -88,7 +88,11 @@ export default {
       rateLimitedIp: "Too many attempts. Please try again later.",
       rateLimitedIdentifier: "Too many attempts for this email. Please try again later.",
       generic: "Something went wrong. Please try again.",
-      serverError: "Something went wrong. Please try again in a moment."
+      serverError: "Something went wrong. Please try again in a moment.",
+      missingRequirements: "Almost there — still missing: {{fields}}.",
+      someFields: "some required fields",
+      unexpectedStatus: "Unexpected status: {{status}}",
+      invalidCode: "Invalid code"
     }
   },
   nav: {
@@ -1221,7 +1225,7 @@ export default {
     }
   },
   actions: {
-    loading: "Loading...",
-    save: "Save"
+    loading: "Chargement...",
+    save: "Enregistrer"
   }
 };
